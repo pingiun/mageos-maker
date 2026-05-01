@@ -51,6 +51,7 @@ class ConfiguratorController extends Controller
             'composer' => $this->renderer->render($composer),
             'requireCount' => count($composer['require'] ?? []),
             'replaceCount' => count($composer['replace'] ?? []),
+            'forcedAddons' => $this->configurator->forcedAddons($selection),
         ]);
     }
 
@@ -78,10 +79,9 @@ class ConfiguratorController extends Controller
         return new Selection(
             version: $version,
             profile: $data['profile'] ?? $base->profile,
-            enabledSets: array_values($data['enabledSets'] ?? $base->enabledSets),
             disabledSets: array_values($data['disabledSets'] ?? $base->disabledSets),
-            enabledLayers: array_values($data['enabledLayers'] ?? $base->enabledLayers),
             disabledLayers: array_values($data['disabledLayers'] ?? $base->disabledLayers),
+            enabledAddons: array_values($data['enabledAddons'] ?? $base->enabledAddons),
             profileGroups: $data['profileGroups'] ?? $base->profileGroups,
         );
     }
@@ -93,6 +93,8 @@ class ConfiguratorController extends Controller
             'versions' => $this->catalog->availableVersions() ?: [$selection->version],
             'sets' => $this->defs->sets,
             'layers' => $this->defs->layers,
+            'addons' => $this->defs->addons,
+            'forcedAddons' => $this->configurator->forcedAddons($selection),
             'profileGroups' => $this->defs->profileGroups,
             'profiles' => $this->defs->profiles,
             'initialComposer' => $this->renderer->render($this->configurator->build($selection)),

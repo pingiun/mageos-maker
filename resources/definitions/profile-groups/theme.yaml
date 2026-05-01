@@ -10,7 +10,6 @@ options:
   - name: hyva
     label: Hyvä
     enables:
-      sets: [hyva]
-      layers: [hyva-compat]
+      addons: [hyva, hyva-compat]
     disables:
       sets: [luma]

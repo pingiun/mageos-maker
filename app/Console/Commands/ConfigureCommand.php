@@ -18,10 +18,9 @@ class ConfigureCommand extends Command
     protected $signature = 'mageos:configure
         {--mageos-version= : Mage-OS edition version (defaults to latest stable)}
         {--profile= : Starter profile name (e.g. mageos-full, mageos-lite)}
-        {--enable=* : Comma-separated set names to enable}
-        {--disable=* : Comma-separated set names to disable}
-        {--enable-layer=* : Comma-separated layer names to enable}
-        {--disable-layer=* : Comma-separated layer names to disable}
+        {--disable=* : Comma-separated set names to disable (added to replace)}
+        {--disable-layer=* : Comma-separated layer names to disable (added to replace)}
+        {--enable-addon=* : Comma-separated add-on names to enable (added to require)}
         {--profile-group=* : Profile-group choices, e.g. theme:hyva}
         {--output= : Write composer.json to this file (default: stdout)}
         {--interactive : Prompt for choices (otherwise pure flag-driven)}';
@@ -44,13 +43,12 @@ class ConfigureCommand extends Command
                 $this->error("Unknown profile: $name");
                 return self::FAILURE;
             }
-            $selection = (Selection::default($version, $defs))->applyProfile($defs->profiles[$name]);
+            $selection = Selection::default($version, $defs)->applyProfile($defs->profiles[$name]);
         }
 
         $disabledSets = $this->splitMulti($this->option('disable'));
-        $enabledSets = $this->splitMulti($this->option('enable'));
         $disabledLayers = $this->splitMulti($this->option('disable-layer'));
-        $enabledLayers = $this->splitMulti($this->option('enable-layer'));
+        $enabledAddons = $this->splitMulti($this->option('enable-addon'));
         $profileGroups = $selection->profileGroups;
         foreach ($this->splitMulti($this->option('profile-group')) as $pair) {
             [$group, $option] = explode(':', $pair, 2) + [null, null];
@@ -62,15 +60,14 @@ class ConfigureCommand extends Command
         $selection = new Selection(
             version: $version,
             profile: $selection->profile,
-            enabledSets: array_values(array_unique(array_merge($selection->enabledSets, $enabledSets))),
             disabledSets: array_values(array_unique(array_merge($selection->disabledSets, $disabledSets))),
-            enabledLayers: array_values(array_unique(array_merge($selection->enabledLayers, $enabledLayers))),
             disabledLayers: array_values(array_unique(array_merge($selection->disabledLayers, $disabledLayers))),
+            enabledAddons: array_values(array_unique(array_merge($selection->enabledAddons, $enabledAddons))),
             profileGroups: $profileGroups,
         );
 
         if ($this->option('interactive')) {
-            $selection = $this->runInteractive($selection, $defs, $catalog);
+            $selection = $this->runInteractive($selection, $defs, $catalog, $configurator);
         }
 
         $composer = $configurator->build($selection);
@@ -101,7 +98,7 @@ class ConfigureCommand extends Command
         return $out;
     }
 
-    private function runInteractive(Selection $selection, Definitions $defs, CatalogRepository $catalog): Selection
+    private function runInteractive(Selection $selection, Definitions $defs, CatalogRepository $catalog, Configurator $configurator): Selection
     {
         $versions = $catalog->availableVersions() ?: [$selection->version];
         $version = select(
@@ -121,13 +118,27 @@ class ConfigureCommand extends Command
         );
         $selection = Selection::default($version, $defs)->applyProfile($defs->profiles[$profile]);
 
+        $profileGroups = $selection->profileGroups;
+        foreach ($defs->profileGroups as $group => $def) {
+            $options = [];
+            foreach ($def['options'] as $opt) {
+                $options[$opt['name']] = $opt['label'];
+            }
+            $current = $profileGroups[$group] ?? $defs->defaultProfileGroupOption($group) ?? array_key_first($options);
+            $profileGroups[$group] = select(
+                label: $def['label'],
+                options: $options,
+                default: $current,
+            );
+        }
+
         $setOptions = [];
         foreach ($defs->sets as $name => $set) {
             $setOptions[$name] = $set['label'];
         }
         $enabledSetNames = array_diff(array_keys($setOptions), $selection->disabledSets);
         $kept = multiselect(
-            label: 'Modules (sets) to keep enabled',
+            label: 'Modules to keep enabled',
             options: $setOptions,
             default: array_values($enabledSetNames),
             scroll: 12,
@@ -147,18 +158,29 @@ class ConfigureCommand extends Command
         );
         $disabledLayers = array_values(array_diff(array_keys($layerOptions), $keptLayers));
 
-        $profileGroups = $selection->profileGroups;
-        foreach ($defs->profileGroups as $group => $def) {
-            $options = [];
-            foreach ($def['options'] as $opt) {
-                $options[$opt['name']] = $opt['label'];
+        // Forced add-ons (from current profile-group choices) are excluded from the
+        // multiselect — they're always on.
+        $tentative = new Selection(
+            $version, $profile, $disabledSets, $disabledLayers,
+            $selection->enabledAddons, $profileGroups,
+        );
+        $forced = $configurator->forcedAddons($tentative);
+        $userPickable = array_diff_key($defs->addons, array_flip($forced));
+        $enabledAddons = $selection->enabledAddons;
+        if ($userPickable !== []) {
+            $addonOptions = [];
+            foreach ($userPickable as $name => $addon) {
+                $addonOptions[$name] = $addon['label'];
             }
-            $current = $profileGroups[$group] ?? $defs->defaultProfileGroupOption($group) ?? array_key_first($options);
-            $profileGroups[$group] = select(
-                label: $def['label'],
-                options: $options,
-                default: $current,
+            $enabledAddons = multiselect(
+                label: 'Optional add-ons',
+                options: $addonOptions,
+                default: array_values(array_intersect(array_keys($addonOptions), $enabledAddons)),
+                scroll: 8,
             );
+        }
+        if ($forced !== []) {
+            info('Auto-enabled add-ons (from profile groups): '.implode(', ', $forced));
         }
 
         info("Configured for Mage-OS $version (profile: $profile)");
@@ -166,10 +188,9 @@ class ConfigureCommand extends Command
         return new Selection(
             version: $version,
             profile: $profile,
-            enabledSets: $selection->enabledSets,
             disabledSets: $disabledSets,
-            enabledLayers: $selection->enabledLayers,
             disabledLayers: $disabledLayers,
+            enabledAddons: array_values($enabledAddons),
             profileGroups: $profileGroups,
         );
     }

@@ -13,6 +13,7 @@ class DefinitionLoader
         return new Definitions(
             sets: $this->readDir('sets'),
             layers: $this->readDir('layers'),
+            addons: $this->readDir('addons'),
             profileGroups: $this->readDir('profile-groups'),
             profiles: $this->readDir('profiles'),
         );

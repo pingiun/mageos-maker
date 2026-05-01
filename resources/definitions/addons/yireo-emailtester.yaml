@@ -1,0 +1,5 @@
+name: yireo-emailtester
+label: Yireo Email Tester
+description: Adds an Email Tester section to the admin to preview transactional emails (Yireo)
+packages:
+  - yireo/magento2-emailtester

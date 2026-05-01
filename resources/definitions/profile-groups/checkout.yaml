@@ -8,4 +8,4 @@ options:
   - name: hyva-checkout
     label: Hyvä Checkout
     enables:
-      sets: [hyva-checkout]
+      addons: [hyva-checkout]

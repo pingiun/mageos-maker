@@ -2,10 +2,9 @@ name: mageos-headless
 label: Mage-OS Headless
 description: Backend + GraphQL API only — no Luma storefront
 selection:
-  enabledSets: []
   disabledSets: [luma]
-  enabledLayers: []
   disabledLayers: []
+  enabledAddons: []
   profileGroups:
     theme: luma
     checkout: default

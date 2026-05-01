@@ -8,8 +8,8 @@ namespace App\Services;
  * Uses the actual composer.json shipped by `mage-os/project-community-edition` for
  * the chosen version as the base — equivalent to running
  *   composer create-project --repository-url=https://repo.mage-os.org/ mage-os/project-community-edition .
- * Then layers `replace` entries for disabled sets/layers and adds `require` entries
- * for explicitly-enabled add-on packages (e.g. Hyvä).
+ * Then layers `replace` entries for disabled sets/layers (subtractive) and adds
+ * `require` entries for enabled add-on packages (additive).
  */
 class Configurator
 {
@@ -21,31 +21,23 @@ class Configurator
 
     public function build(Selection $selection): array
     {
-        // 1. Resolve profile-group choices → effective enabled/disabled sets and layers.
-        [$enableSets, $disableSets, $enableLayers, $disableLayers] = $this->resolveProfileGroups($selection);
+        $resolved = $this->resolveProfileGroups($selection);
 
-        $enabledSets = array_values(array_unique(array_merge($enableSets, $selection->enabledSets)));
-        $disabledSets = array_values(array_diff(array_unique(array_merge($disableSets, $selection->disabledSets)), $enabledSets));
-        $enabledLayers = array_values(array_unique(array_merge($enableLayers, $selection->enabledLayers)));
-        $disabledLayers = array_values(array_diff(array_unique(array_merge($disableLayers, $selection->disabledLayers)), $enabledLayers));
+        $disabledSets = array_values(array_unique(array_merge($resolved['disableSets'], $selection->disabledSets)));
+        $disabledLayers = array_values(array_unique(array_merge($resolved['disableLayers'], $selection->disabledLayers)));
+        $effectiveAddons = array_values(array_unique(array_merge($resolved['enableAddons'], $selection->enabledAddons)));
 
-        // 2. Start from the upstream project-community-edition composer.json template.
         $composer = $this->baseComposer($selection->version);
 
-        // 3. Append explicitly-enabled add-on packages to require.
-        foreach ($enabledSets as $set) {
-            foreach ($this->defs->setPackages($set) as $pkg) {
-                $composer['require'][$pkg] = '*';
-            }
-        }
-        foreach ($enabledLayers as $layer) {
-            foreach ($this->defs->layerPackages($layer) as $pkg) {
+        // Add-ons: append to require.
+        foreach ($effectiveAddons as $addon) {
+            foreach ($this->defs->addonPackages($addon) as $pkg) {
                 $composer['require'][$pkg] = '*';
             }
         }
         ksort($composer['require']);
 
-        // 4. Build replace from disabled sets & layers.
+        // Disabled sets/layers: append to replace.
         $replace = $composer['replace'] ?? [];
         foreach ($disabledSets as $set) {
             foreach ($this->defs->setPackages($set) as $pkg) {
@@ -66,6 +58,17 @@ class Configurator
     }
 
     /**
+     * Returns add-on names forced on by the currently-selected profile-group options.
+     * The UI uses these to render forced add-ons as checked-and-disabled.
+     *
+     * @return list<string>
+     */
+    public function forcedAddons(Selection $selection): array
+    {
+        return array_values(array_unique($this->resolveProfileGroups($selection)['enableAddons']));
+    }
+
+    /**
      * Pull the stock composer.json from project-community-edition's package metadata.
      * Strips dist/source/version fields that don't belong in a project's composer.json.
      */
@@ -75,7 +78,6 @@ class Configurator
         $template = $editionPackages[$version] ?? null;
 
         if ($template === null) {
-            // Catalog cold — emit a minimal fallback that still requires the meta-package.
             return [
                 'name' => config('mageos.edition_package'),
                 'description' => 'Mage-OS project tailored with mageos-maker',
@@ -87,7 +89,6 @@ class Configurator
             ];
         }
 
-        // Drop fields that only make sense on the upstream package itself.
         $skip = ['name', 'version', 'version_normalized', 'dist', 'source', 'time', 'uid', 'description'];
         $base = [];
         foreach ($template as $key => $value) {
@@ -113,23 +114,26 @@ class Configurator
     }
 
     /**
-     * @return array{0:list<string>,1:list<string>,2:list<string>,3:list<string>}
+     * @return array{enableAddons:list<string>, disableSets:list<string>, disableLayers:list<string>}
      */
     private function resolveProfileGroups(Selection $selection): array
     {
-        $enableSets = $disableSets = $enableLayers = $disableLayers = [];
+        $enableAddons = $disableSets = $disableLayers = [];
 
         foreach ($selection->profileGroups as $group => $optionName) {
             $option = $this->defs->profileGroupOption($group, $optionName);
             if ($option === null) {
                 continue;
             }
-            $enableSets = array_merge($enableSets, $option['enables']['sets'] ?? []);
-            $enableLayers = array_merge($enableLayers, $option['enables']['layers'] ?? []);
+            $enableAddons = array_merge($enableAddons, $option['enables']['addons'] ?? []);
             $disableSets = array_merge($disableSets, $option['disables']['sets'] ?? []);
             $disableLayers = array_merge($disableLayers, $option['disables']['layers'] ?? []);
         }
 
-        return [$enableSets, $disableSets, $enableLayers, $disableLayers];
+        return [
+            'enableAddons' => $enableAddons,
+            'disableSets' => $disableSets,
+            'disableLayers' => $disableLayers,
+        ];
     }
 }

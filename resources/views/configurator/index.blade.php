@@ -40,6 +40,8 @@
         button.secondary { background: #444; }
         button.secondary:hover { background: #222; }
         .pill { display: inline-block; background: #eef; color: #226; font-size: 11px; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+        .checkbox-list label.forced { opacity: 0.7; cursor: not-allowed; }
+        .checkbox-list label.forced:hover { background: transparent; }
     </style>
 </head>
 <body>
@@ -111,6 +113,27 @@
                         <span>
                             <strong>{{ $layer['label'] }}</strong>
                             <span class="desc">{{ $layer['description'] ?? '' }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Add-ons</h2>
+            <p style="font-size:12px;color:#666;margin:0 0 8px;">Extra packages outside stock Mage-OS. Greyed-out add-ons are forced by your current profile-group choices.</p>
+            <div class="checkbox-list" id="addon-list">
+                @foreach ($addons as $name => $addon)
+                    @php $isForced = in_array($name, $forcedAddons, true); @endphp
+                    <label class="{{ $isForced ? 'forced' : '' }}">
+                        <input type="checkbox" name="addon" value="{{ $name }}"
+                            @checked($isForced || in_array($name, $selection->enabledAddons, true))
+                            @disabled($isForced)
+                            data-forced="{{ $isForced ? '1' : '0' }}">
+                        <span>
+                            <strong>{{ $addon['label'] }}</strong>
+                            @if ($isForced) <span class="pill">required</span> @endif
+                            <span class="desc">{{ $addon['description'] ?? '' }}</span>
                         </span>
                     </label>
                 @endforeach
@@ -202,7 +225,7 @@
         }
     }
 
-    function setComposer(json, requireCount, replaceCount) {
+    function setComposer(json, requireCount, replaceCount, forcedAddons) {
         const el = document.getElementById('composer-out');
         const pre = el.parentElement;
         const changed = diffLineIndices(lastJson, json);
@@ -212,6 +235,7 @@
         hljs.highlightElement(el);
         flashChangedLines(pre, el, groupRanges(changed));
         document.getElementById('stats').textContent = `require: ${requireCount} · replace: ${replaceCount}`;
+        if (Array.isArray(forcedAddons)) applyForcedAddons(forcedAddons);
     }
 
     function gatherSelection() {
@@ -219,6 +243,11 @@
         document.querySelectorAll('input[name=set]').forEach(el => { if (!el.checked) disabledSets.push(el.value); });
         const disabledLayers = [];
         document.querySelectorAll('input[name=layer]').forEach(el => { if (!el.checked) disabledLayers.push(el.value); });
+        const enabledAddons = [];
+        document.querySelectorAll('input[name=addon]').forEach(el => {
+            // Forced addons are always included by the server; don't double-send them.
+            if (el.checked && el.dataset.forced !== '1') enabledAddons.push(el.value);
+        });
         const profileGroups = {};
         document.querySelectorAll('input[type=radio][name^="pg-"]:checked').forEach(el => {
             profileGroups[el.name.slice(3)] = el.value;
@@ -226,12 +255,33 @@
         return {
             version: document.getElementById('version').value,
             profile: document.querySelector('input[name=profile]:checked')?.value || null,
-            enabledSets: [],
             disabledSets,
-            enabledLayers: [],
             disabledLayers,
+            enabledAddons,
             profileGroups,
         };
+    }
+
+    function applyForcedAddons(forced) {
+        const set = new Set(forced);
+        document.querySelectorAll('#addon-list label').forEach(label => {
+            const input = label.querySelector('input[name=addon]');
+            const isForced = set.has(input.value);
+            input.dataset.forced = isForced ? '1' : '0';
+            input.disabled = isForced;
+            if (isForced) input.checked = true;
+            label.classList.toggle('forced', isForced);
+            // Pill management: add/remove a `required` pill alongside the label.
+            const existing = label.querySelector('.pill');
+            if (isForced && !existing) {
+                const pill = document.createElement('span');
+                pill.className = 'pill';
+                pill.textContent = 'required';
+                label.querySelector('strong').after(' ', pill);
+            } else if (!isForced && existing) {
+                existing.remove();
+            }
+        });
     }
 
     let pending = null;
@@ -244,7 +294,7 @@
                 body: JSON.stringify({selection: gatherSelection()}),
             });
             const data = await res.json();
-            setComposer(data.composer, data.requireCount, data.replaceCount);
+            setComposer(data.composer, data.requireCount, data.replaceCount, data.forcedAddons);
         }, 80);
     }
 
