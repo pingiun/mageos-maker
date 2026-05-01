@@ -10,8 +10,11 @@ options:
     # The `luma` set still exists so other themes can list it under `disables`.
   - name: hyva
     label: Hyvä
+    # `enables` = soft default: auto-checked when hyva is selected, user can uncheck.
+    # `forces`  = hard lock: auto-checked AND disabled — user cannot override.
     enables:
       addons: [hyva]
+    forces:
       layers: [hyva-compat]
     disables:
       sets: [luma]

@@ -25,8 +25,9 @@ class Configurator
 
         $disabledSets = array_values(array_unique(array_merge($resolved['disableSets'], $selection->disabledSets)));
         $disabledLayers = array_values(array_unique(array_merge($resolved['disableLayers'], $selection->disabledLayers)));
-        $effectiveAddons = array_values(array_unique(array_merge($resolved['enableAddons'], $selection->enabledAddons)));
-        $effectiveEnabledLayers = array_values(array_unique(array_merge($resolved['enableLayers'], $selection->enabledLayers)));
+        // Forced items always go in, soft defaults only when echoed back via the form.
+        $effectiveAddons = array_values(array_unique(array_merge($resolved['forceAddons'], $selection->enabledAddons)));
+        $effectiveEnabledLayers = array_values(array_unique(array_merge($resolved['forceLayers'], $selection->enabledLayers)));
 
         $composer = $this->baseComposer($selection->version);
 
@@ -71,24 +72,44 @@ class Configurator
     }
 
     /**
-     * Add-on names forced on by the currently-selected profile-group options.
+     * Add-on names forced on (locked) by the currently-selected profile-group options.
      *
      * @return list<string>
      */
     public function forcedAddons(Selection $selection): array
     {
-        return array_values(array_unique($this->resolveProfileGroups($selection)['enableAddons']));
+        return array_values(array_unique($this->resolveProfileGroups($selection)['forceAddons']));
     }
 
     /**
-     * Layer names forced on by the currently-selected profile-group options
-     * (only non-stock layers ever appear here — stock layers are on by default).
+     * Layer names forced on (locked) by the currently-selected profile-group options.
      *
      * @return list<string>
      */
     public function forcedLayers(Selection $selection): array
     {
-        return array_values(array_unique($this->resolveProfileGroups($selection)['enableLayers']));
+        return array_values(array_unique($this->resolveProfileGroups($selection)['forceLayers']));
+    }
+
+    /**
+     * Add-on names that the currently-selected profile-group options soft-default to ON
+     * (auto-checked but user can override).
+     *
+     * @return list<string>
+     */
+    public function defaultedAddons(Selection $selection): array
+    {
+        return array_values(array_unique($this->resolveProfileGroups($selection)['defaultAddons']));
+    }
+
+    /**
+     * Layer names that the currently-selected profile-group options soft-default to ON.
+     *
+     * @return list<string>
+     */
+    public function defaultedLayers(Selection $selection): array
+    {
+        return array_values(array_unique($this->resolveProfileGroups($selection)['defaultLayers']));
     }
 
     /**
@@ -137,26 +158,30 @@ class Configurator
     }
 
     /**
-     * @return array{enableAddons:list<string>, enableLayers:list<string>, disableSets:list<string>, disableLayers:list<string>}
+     * @return array{forceAddons:list<string>, forceLayers:list<string>, defaultAddons:list<string>, defaultLayers:list<string>, disableSets:list<string>, disableLayers:list<string>}
      */
     private function resolveProfileGroups(Selection $selection): array
     {
-        $enableAddons = $enableLayers = $disableSets = $disableLayers = [];
+        $forceAddons = $forceLayers = $defaultAddons = $defaultLayers = $disableSets = $disableLayers = [];
 
         foreach ($selection->profileGroups as $group => $optionName) {
             $option = $this->defs->profileGroupOption($group, $optionName);
             if ($option === null) {
                 continue;
             }
-            $enableAddons = array_merge($enableAddons, $option['enables']['addons'] ?? []);
-            $enableLayers = array_merge($enableLayers, $option['enables']['layers'] ?? []);
+            $defaultAddons = array_merge($defaultAddons, $option['enables']['addons'] ?? []);
+            $defaultLayers = array_merge($defaultLayers, $option['enables']['layers'] ?? []);
+            $forceAddons = array_merge($forceAddons, $option['forces']['addons'] ?? []);
+            $forceLayers = array_merge($forceLayers, $option['forces']['layers'] ?? []);
             $disableSets = array_merge($disableSets, $option['disables']['sets'] ?? []);
             $disableLayers = array_merge($disableLayers, $option['disables']['layers'] ?? []);
         }
 
         return [
-            'enableAddons' => $enableAddons,
-            'enableLayers' => $enableLayers,
+            'forceAddons' => $forceAddons,
+            'forceLayers' => $forceLayers,
+            'defaultAddons' => $defaultAddons,
+            'defaultLayers' => $defaultLayers,
             'disableSets' => $disableSets,
             'disableLayers' => $disableLayers,
         ];

@@ -53,6 +53,8 @@ class ConfiguratorController extends Controller
             'replaceCount' => count($composer['replace'] ?? []),
             'forcedAddons' => $this->configurator->forcedAddons($selection),
             'forcedLayers' => $this->configurator->forcedLayers($selection),
+            'defaultedAddons' => $this->configurator->defaultedAddons($selection),
+            'defaultedLayers' => $this->configurator->defaultedLayers($selection),
         ]);
     }
 
@@ -98,6 +100,8 @@ class ConfiguratorController extends Controller
             'addons' => $this->defs->addons,
             'forcedAddons' => $this->configurator->forcedAddons($selection),
             'forcedLayers' => $this->configurator->forcedLayers($selection),
+            'defaultedAddons' => $this->configurator->defaultedAddons($selection),
+            'defaultedLayers' => $this->configurator->defaultedLayers($selection),
             'profileGroups' => $this->defs->profileGroups,
             'profiles' => $this->defs->profiles,
             'initialComposer' => $this->renderer->render($this->configurator->build($selection)),

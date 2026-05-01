@@ -94,10 +94,14 @@
             <p style="font-size:12px;color:#666;margin:0 0 8px;">Extra packages outside stock Mage-OS. Greyed-out items are forced by your current profile-group choices.</p>
             <div class="checkbox-list" id="addon-list">
                 @foreach ($addons as $name => $addon)
-                    @php $isForced = in_array($name, $forcedAddons, true); @endphp
+                    @php
+                        $isForced = in_array($name, $forcedAddons, true);
+                        $isDefaulted = in_array($name, $defaultedAddons, true);
+                        $checked = $isForced || in_array($name, $selection->enabledAddons, true) || $isDefaulted;
+                    @endphp
                     <label class="{{ $isForced ? 'forced' : '' }}">
                         <input type="checkbox" name="addon" value="{{ $name }}"
-                            @checked($isForced || in_array($name, $selection->enabledAddons, true))
+                            @checked($checked)
                             @disabled($isForced)
                             data-forced="{{ $isForced ? '1' : '0' }}">
                         <span>
@@ -127,16 +131,17 @@
 
         <div class="panel">
             <h2>Layers</h2>
-            <p style="font-size:12px;color:#666;margin:0 0 8px;">Cross-cutting concerns. Stock layers are on by default; non-stock layers are off unless forced by your profile-group choices.</p>
+            <p style="font-size:12px;color:#666;margin:0 0 8px;">Cross-cutting concerns. Stock layers are on by default; non-stock layers are off unless your profile-group choices enable them.</p>
             <div class="checkbox-list" id="layer-list">
                 @foreach ($layers as $name => $layer)
                     @php
                         $isStock = ($layer['stock'] ?? true) !== false;
                         $isForced = in_array($name, $forcedLayers, true);
+                        $isDefaulted = in_array($name, $defaultedLayers, true);
                         if ($isStock) {
                             $checked = ! in_array($name, $selection->disabledLayers, true);
                         } else {
-                            $checked = $isForced || in_array($name, $selection->enabledLayers, true);
+                            $checked = $isForced || in_array($name, $selection->enabledLayers, true) || $isDefaulted;
                         }
                     @endphp
                     <label class="{{ $isForced ? 'forced' : '' }}">
@@ -148,7 +153,6 @@
                         <span>
                             <strong>{{ $layer['label'] }}</strong>
                             @if ($isForced) <span class="pill">required</span> @endif
-                            @if (! $isStock && ! $isForced) <span class="pill" style="background:#fff3cd;color:#664">add-on</span> @endif
                             <span class="desc">{{ $layer['description'] ?? '' }}</span>
                         </span>
                     </label>
@@ -171,7 +175,13 @@
 
 <script>
     const csrf = document.querySelector('meta[name=csrf-token]').content;
+    const PROFILES = @json($profiles);
     let lastJson = document.getElementById('composer-out').textContent;
+    // Track soft-default lists from the previous server response so we can
+    // diff and apply changes on the next response (auto-check newly defaulted
+    // items, auto-uncheck ones that are no longer defaulted).
+    let prevDefaultedAddons = @json($defaultedAddons);
+    let prevDefaultedLayers = @json($defaultedLayers);
 
     // Returns the set of new-line indices whose content changed vs. the old text.
     // Standard LCS over lines; fast enough for typical composer.json sizes.
@@ -241,7 +251,7 @@
         }
     }
 
-    function setComposer(json, requireCount, replaceCount, forcedAddons, forcedLayers) {
+    function setComposer(json, requireCount, replaceCount, forcedAddons, forcedLayers, defaultedAddons, defaultedLayers) {
         const el = document.getElementById('composer-out');
         const pre = el.parentElement;
         const changed = diffLineIndices(lastJson, json);
@@ -251,6 +261,14 @@
         hljs.highlightElement(el);
         flashChangedLines(pre, el, groupRanges(changed));
         document.getElementById('stats').textContent = `require: ${requireCount} · replace: ${replaceCount}`;
+        if (Array.isArray(defaultedAddons)) {
+            applySoftDefaults('#addon-list', 'addon', defaultedAddons, prevDefaultedAddons);
+            prevDefaultedAddons = defaultedAddons;
+        }
+        if (Array.isArray(defaultedLayers)) {
+            applySoftDefaults('#layer-list', 'layer', defaultedLayers, prevDefaultedLayers);
+            prevDefaultedLayers = defaultedLayers;
+        }
         if (Array.isArray(forcedAddons)) applyForcedFlags('#addon-list', 'addon', forcedAddons);
         if (Array.isArray(forcedLayers)) applyForcedFlags('#layer-list', 'layer', forcedLayers);
     }
@@ -288,6 +306,21 @@
         };
     }
 
+    // For soft defaults: items newly in `defaulted` get auto-checked; items
+    // dropping out get auto-unchecked. Forced inputs are skipped (their state
+    // is owned by applyForcedFlags).
+    function applySoftDefaults(listSelector, inputName, defaulted, prevList) {
+        const cur = new Set(defaulted);
+        const prev = new Set(prevList);
+        document.querySelectorAll(`${listSelector} input[name=${inputName}]`).forEach(input => {
+            if (input.dataset.forced === '1') return;
+            const wasDefault = prev.has(input.value);
+            const isDefault = cur.has(input.value);
+            if (isDefault && !wasDefault) input.checked = true;
+            else if (!isDefault && wasDefault) input.checked = false;
+        });
+    }
+
     function applyForcedFlags(listSelector, inputName, forced) {
         const set = new Set(forced);
         document.querySelectorAll(`${listSelector} label`).forEach(label => {
@@ -323,7 +356,7 @@
                 body: JSON.stringify({selection: gatherSelection()}),
             });
             const data = await res.json();
-            setComposer(data.composer, data.requireCount, data.replaceCount, data.forcedAddons, data.forcedLayers);
+            setComposer(data.composer, data.requireCount, data.replaceCount, data.forcedAddons, data.forcedLayers, data.defaultedAddons, data.defaultedLayers);
         }, 80);
     }
 
@@ -336,19 +369,38 @@
         refresh();
     }));
 
-    async function applyProfile(name) {
-        // Trigger preview using profile, then mirror its disable lists in the form.
-        const sel = gatherSelection();
-        sel.profile = name;
-        sel.enabledSets = []; sel.disabledSets = [];
-        sel.enabledLayers = []; sel.disabledLayers = [];
-        const res = await fetch('/preview', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf},
-            body: JSON.stringify({selection: {version: sel.version, profile: name}}),
+    function applyProfile(name) {
+        const profile = PROFILES[name];
+        if (!profile) return;
+        const sel = profile.selection || {};
+        const disabledSets = new Set(sel.disabledSets || []);
+        const disabledLayers = new Set(sel.disabledLayers || []);
+        const enabledLayers = new Set(sel.enabledLayers || []);
+        const enabledAddons = new Set(sel.enabledAddons || []);
+        const groups = sel.profileGroups || {};
+
+        document.querySelectorAll('input[name=set]').forEach(el => {
+            el.checked = !disabledSets.has(el.value);
         });
-        const data = await res.json();
-        setComposer(data.composer, data.requireCount, data.replaceCount);
+        document.querySelectorAll('input[name=layer]').forEach(el => {
+            if (el.dataset.forced === '1') return;
+            if (el.dataset.stock === '1') el.checked = !disabledLayers.has(el.value);
+            else el.checked = enabledLayers.has(el.value);
+        });
+        document.querySelectorAll('input[name=addon]').forEach(el => {
+            if (el.dataset.forced === '1') return;
+            el.checked = enabledAddons.has(el.value);
+        });
+        Object.entries(groups).forEach(([group, opt]) => {
+            const radio = document.querySelector(`input[name="pg-${group}"][value="${opt}"]`);
+            if (radio) radio.checked = true;
+        });
+
+        // We just rewrote the form; reset soft-default tracking so the next
+        // refresh re-applies any defaulted items from the resolved state.
+        prevDefaultedAddons = [];
+        prevDefaultedLayers = [];
+        refresh();
     }
 
     function copyComposer() {
