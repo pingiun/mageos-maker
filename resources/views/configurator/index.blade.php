@@ -189,8 +189,17 @@
             overlay.appendChild(strip);
         }
         preEl.appendChild(overlay);
-        // Auto-cleanup after the animation finishes.
         setTimeout(() => overlay.remove(), 2000);
+
+        // Scroll the first change into view if it's outside the visible area.
+        const firstStart = changedRanges[0][0];
+        const padTop = parseFloat(getComputedStyle(codeEl).paddingTop) || 0;
+        const targetTop = firstStart * lineHeight + padTop;
+        const visibleTop = preEl.scrollTop;
+        const visibleBottom = visibleTop + preEl.clientHeight;
+        if (targetTop < visibleTop || targetTop > visibleBottom - lineHeight * 2) {
+            preEl.scrollTo({top: Math.max(0, targetTop - lineHeight * 2), behavior: 'smooth'});
+        }
     }
 
     function setComposer(json, requireCount, replaceCount) {
