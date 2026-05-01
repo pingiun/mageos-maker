@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>mageos-maker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/atom-one-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/languages/json.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #f7f7f8; color: #1a1a1a; }
         header { background: #1a1a1a; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
         header h1 { font-size: 18px; margin: 0; font-weight: 600; }
         header .saved { font-size: 12px; opacity: 0.7; }
-        main { display: grid; grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.2fr); gap: 24px; padding: 24px; max-width: 1600px; margin: 0 auto; }
+        main { display: grid; grid-template-columns: minmax(340px, 1fr) minmax(500px, 1.5fr); gap: 24px; padding: 24px; max-width: 1700px; margin: 0 auto; }
         .panel { background: #fff; border: 1px solid #e2e2e6; border-radius: 8px; padding: 20px; }
         .panel h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px; color: #555; }
         .panel + .panel { margin-top: 16px; }
@@ -25,7 +28,8 @@
         .radio-group { display: flex; flex-direction: column; gap: 6px; }
         .radio-group label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
         .right { display: flex; flex-direction: column; gap: 16px; }
-        pre.composer { background: #1e1e23; color: #e6e6e6; padding: 16px; border-radius: 8px; overflow: auto; font-size: 12px; line-height: 1.5; max-height: 70vh; margin: 0; }
+        pre.composer { padding: 0; border-radius: 6px; overflow: auto; font-size: 12.5px; line-height: 1.55; max-height: 78vh; margin: 0; }
+        pre.composer code.hljs { padding: 18px 20px; background: #1e1e23; border-radius: 6px; }
         .toolbar { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .toolbar .stats { font-size: 12px; color: #ccc; margin-left: auto; }
         button { background: #2563eb; color: #fff; border: 0; padding: 8px 14px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; }
@@ -118,13 +122,21 @@
                 <button class="secondary" onclick="saveConfig()">Save & share</button>
                 <span class="stats" id="stats"></span>
             </div>
-            <pre class="composer" id="composer-out">{{ $initialComposer }}</pre>
+            <pre class="composer"><code id="composer-out" class="language-json">{{ $initialComposer }}</code></pre>
         </div>
     </div>
 </main>
 
 <script>
     const csrf = document.querySelector('meta[name=csrf-token]').content;
+
+    function setComposer(json, requireCount, replaceCount) {
+        const el = document.getElementById('composer-out');
+        el.textContent = json;
+        delete el.dataset.highlighted;
+        hljs.highlightElement(el);
+        document.getElementById('stats').textContent = `require: ${requireCount} · replace: ${replaceCount}`;
+    }
 
     function gatherSelection() {
         const disabledSets = [];
@@ -156,8 +168,7 @@
                 body: JSON.stringify({selection: gatherSelection()}),
             });
             const data = await res.json();
-            document.getElementById('composer-out').textContent = data.composer;
-            document.getElementById('stats').textContent = `require: ${data.requireCount} · replace: ${data.replaceCount}`;
+            setComposer(data.composer, data.requireCount, data.replaceCount);
         }, 80);
     }
 
@@ -182,8 +193,7 @@
             body: JSON.stringify({selection: {version: sel.version, profile: name}}),
         });
         const data = await res.json();
-        document.getElementById('composer-out').textContent = data.composer;
-        document.getElementById('stats').textContent = `require: ${data.requireCount} · replace: ${data.replaceCount}`;
+        setComposer(data.composer, data.requireCount, data.replaceCount);
     }
 
     function copyComposer() {
@@ -200,6 +210,7 @@
         location.href = data.url;
     }
 
+    hljs.highlightElement(document.getElementById('composer-out'));
     refresh();
 </script>
 </body>
