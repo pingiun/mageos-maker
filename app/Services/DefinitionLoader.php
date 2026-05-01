@@ -14,12 +14,12 @@ class DefinitionLoader
             sets: $this->readDir('sets'),
             layers: $this->readDir('layers'),
             addons: $this->readDir('addons'),
-            profileGroups: $this->readDir('profile-groups'),
+            profileGroups: $this->readDir('profile-groups', byOrder: true),
             profiles: $this->readDir('profiles'),
         );
     }
 
-    private function readDir(string $sub): array
+    private function readDir(string $sub, bool $byOrder = false): array
     {
         $dir = $this->basePath.'/'.$sub;
         if (! is_dir($dir)) {
@@ -34,7 +34,11 @@ class DefinitionLoader
             }
             $items[$parsed['name']] = $parsed;
         }
-        ksort($items);
+        if ($byOrder) {
+            uasort($items, fn ($a, $b) => ($a['order'] ?? 999) <=> ($b['order'] ?? 999) ?: strcmp($a['name'], $b['name']));
+        } else {
+            ksort($items);
+        }
         return $items;
     }
 }

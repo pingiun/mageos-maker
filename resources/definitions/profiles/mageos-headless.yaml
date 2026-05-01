@@ -4,6 +4,7 @@ description: Backend + GraphQL API only — no Luma storefront
 selection:
   disabledSets: [luma]
   disabledLayers: []
+  enabledLayers: []
   enabledAddons: []
   profileGroups:
     theme: luma

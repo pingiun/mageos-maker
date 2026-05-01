@@ -26,6 +26,7 @@ class Configurator
         $disabledSets = array_values(array_unique(array_merge($resolved['disableSets'], $selection->disabledSets)));
         $disabledLayers = array_values(array_unique(array_merge($resolved['disableLayers'], $selection->disabledLayers)));
         $effectiveAddons = array_values(array_unique(array_merge($resolved['enableAddons'], $selection->enabledAddons)));
+        $effectiveEnabledLayers = array_values(array_unique(array_merge($resolved['enableLayers'], $selection->enabledLayers)));
 
         $composer = $this->baseComposer($selection->version);
 
@@ -35,9 +36,18 @@ class Configurator
                 $composer['require'][$pkg] = '*';
             }
         }
+        // Non-stock layers that are enabled: append to require.
+        foreach ($effectiveEnabledLayers as $layer) {
+            if ($this->defs->isLayerStock($layer)) {
+                continue;
+            }
+            foreach ($this->defs->layerPackages($layer) as $pkg) {
+                $composer['require'][$pkg] = '*';
+            }
+        }
         ksort($composer['require']);
 
-        // Disabled sets/layers: append to replace.
+        // Disabled sets and disabled stock-layers: append to replace.
         $replace = $composer['replace'] ?? [];
         foreach ($disabledSets as $set) {
             foreach ($this->defs->setPackages($set) as $pkg) {
@@ -45,6 +55,9 @@ class Configurator
             }
         }
         foreach ($disabledLayers as $layer) {
+            if (! $this->defs->isLayerStock($layer)) {
+                continue;
+            }
             foreach ($this->defs->layerPackages($layer) as $pkg) {
                 $replace[$pkg] = '*';
             }
@@ -58,14 +71,24 @@ class Configurator
     }
 
     /**
-     * Returns add-on names forced on by the currently-selected profile-group options.
-     * The UI uses these to render forced add-ons as checked-and-disabled.
+     * Add-on names forced on by the currently-selected profile-group options.
      *
      * @return list<string>
      */
     public function forcedAddons(Selection $selection): array
     {
         return array_values(array_unique($this->resolveProfileGroups($selection)['enableAddons']));
+    }
+
+    /**
+     * Layer names forced on by the currently-selected profile-group options
+     * (only non-stock layers ever appear here — stock layers are on by default).
+     *
+     * @return list<string>
+     */
+    public function forcedLayers(Selection $selection): array
+    {
+        return array_values(array_unique($this->resolveProfileGroups($selection)['enableLayers']));
     }
 
     /**
@@ -114,11 +137,11 @@ class Configurator
     }
 
     /**
-     * @return array{enableAddons:list<string>, disableSets:list<string>, disableLayers:list<string>}
+     * @return array{enableAddons:list<string>, enableLayers:list<string>, disableSets:list<string>, disableLayers:list<string>}
      */
     private function resolveProfileGroups(Selection $selection): array
     {
-        $enableAddons = $disableSets = $disableLayers = [];
+        $enableAddons = $enableLayers = $disableSets = $disableLayers = [];
 
         foreach ($selection->profileGroups as $group => $optionName) {
             $option = $this->defs->profileGroupOption($group, $optionName);
@@ -126,12 +149,14 @@ class Configurator
                 continue;
             }
             $enableAddons = array_merge($enableAddons, $option['enables']['addons'] ?? []);
+            $enableLayers = array_merge($enableLayers, $option['enables']['layers'] ?? []);
             $disableSets = array_merge($disableSets, $option['disables']['sets'] ?? []);
             $disableLayers = array_merge($disableLayers, $option['disables']['layers'] ?? []);
         }
 
         return [
             'enableAddons' => $enableAddons,
+            'enableLayers' => $enableLayers,
             'disableSets' => $disableSets,
             'disableLayers' => $disableLayers,
         ];

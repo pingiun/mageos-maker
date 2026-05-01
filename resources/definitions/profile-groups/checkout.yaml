@@ -1,6 +1,7 @@
 name: checkout
 label: Checkout
 description: Checkout implementation
+order: 20
 options:
   - name: default
     label: Luma checkout

@@ -20,6 +20,7 @@ class Selection
         public readonly ?string $profile,
         public readonly array $disabledSets,
         public readonly array $disabledLayers,
+        public readonly array $enabledLayers,
         public readonly array $enabledAddons,
         public readonly array $profileGroups,
     ) {}
@@ -39,6 +40,7 @@ class Selection
             profile: $defs->defaultProfile(),
             disabledSets: [],
             disabledLayers: [],
+            enabledLayers: [],
             enabledAddons: [],
             profileGroups: $profileGroups,
         );
@@ -57,6 +59,7 @@ class Selection
             profile: $data['profile'] ?? $defs->defaultProfile(),
             disabledSets: array_values($data['disabledSets'] ?? []),
             disabledLayers: array_values($data['disabledLayers'] ?? []),
+            enabledLayers: array_values($data['enabledLayers'] ?? []),
             enabledAddons: array_values($data['enabledAddons'] ?? []),
             profileGroups: $data['profileGroups'] ?? [],
         );
@@ -69,6 +72,7 @@ class Selection
             'profile' => $this->profile,
             'disabledSets' => $this->disabledSets,
             'disabledLayers' => $this->disabledLayers,
+            'enabledLayers' => $this->enabledLayers,
             'enabledAddons' => $this->enabledAddons,
             'profileGroups' => $this->profileGroups,
         ];
@@ -82,6 +86,7 @@ class Selection
             profile: $profile['name'] ?? $this->profile,
             disabledSets: array_values(array_unique(array_merge($this->disabledSets, $sel['disabledSets'] ?? []))),
             disabledLayers: array_values(array_unique(array_merge($this->disabledLayers, $sel['disabledLayers'] ?? []))),
+            enabledLayers: array_values(array_unique(array_merge($this->enabledLayers, $sel['enabledLayers'] ?? []))),
             enabledAddons: array_values(array_unique(array_merge($this->enabledAddons, $sel['enabledAddons'] ?? []))),
             profileGroups: array_merge($this->profileGroups, $sel['profileGroups'] ?? []),
         );

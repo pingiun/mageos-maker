@@ -1,6 +1,7 @@
 name: theme
 label: Theme
 description: Storefront theme
+order: 10
 options:
   - name: luma
     label: Luma
@@ -10,6 +11,7 @@ options:
   - name: hyva
     label: Hyvä
     enables:
-      addons: [hyva, hyva-compat]
+      addons: [hyva]
+      layers: [hyva-compat]
     disables:
       sets: [luma]

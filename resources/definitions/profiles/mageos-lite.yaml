@@ -4,6 +4,7 @@ description: Bare-minimum webshop — wishlist, gift messages, login-as-customer
 selection:
   disabledSets: [wishlist, gift-message, inventory, login-as-customer, admin-analytics]
   disabledLayers: []
+  enabledLayers: []
   enabledAddons: []
   profileGroups:
     theme: luma

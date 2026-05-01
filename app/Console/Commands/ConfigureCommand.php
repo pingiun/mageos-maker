@@ -19,7 +19,8 @@ class ConfigureCommand extends Command
         {--mageos-version= : Mage-OS edition version (defaults to latest stable)}
         {--profile= : Starter profile name (e.g. mageos-full, mageos-lite)}
         {--disable=* : Comma-separated set names to disable (added to replace)}
-        {--disable-layer=* : Comma-separated layer names to disable (added to replace)}
+        {--disable-layer=* : Comma-separated stock layer names to disable (added to replace)}
+        {--enable-layer=* : Comma-separated non-stock layer names to enable (added to require)}
         {--enable-addon=* : Comma-separated add-on names to enable (added to require)}
         {--profile-group=* : Profile-group choices, e.g. theme:hyva}
         {--output= : Write composer.json to this file (default: stdout)}
@@ -48,6 +49,7 @@ class ConfigureCommand extends Command
 
         $disabledSets = $this->splitMulti($this->option('disable'));
         $disabledLayers = $this->splitMulti($this->option('disable-layer'));
+        $enabledLayers = $this->splitMulti($this->option('enable-layer'));
         $enabledAddons = $this->splitMulti($this->option('enable-addon'));
         $profileGroups = $selection->profileGroups;
         foreach ($this->splitMulti($this->option('profile-group')) as $pair) {
@@ -62,6 +64,7 @@ class ConfigureCommand extends Command
             profile: $selection->profile,
             disabledSets: array_values(array_unique(array_merge($selection->disabledSets, $disabledSets))),
             disabledLayers: array_values(array_unique(array_merge($selection->disabledLayers, $disabledLayers))),
+            enabledLayers: array_values(array_unique(array_merge($selection->enabledLayers, $enabledLayers))),
             enabledAddons: array_values(array_unique(array_merge($selection->enabledAddons, $enabledAddons))),
             profileGroups: $profileGroups,
         );
@@ -145,31 +148,53 @@ class ConfigureCommand extends Command
         );
         $disabledSets = array_values(array_diff(array_keys($setOptions), $kept));
 
-        $layerOptions = [];
+        // Stock layers: default-on, uncheck to disable.
+        $stockLayerOptions = [];
+        $addonLayerOptions = [];
         foreach ($defs->layers as $name => $layer) {
-            $layerOptions[$name] = $layer['label'];
+            if ($defs->isLayerStock($name)) {
+                $stockLayerOptions[$name] = $layer['label'];
+            } else {
+                $addonLayerOptions[$name] = $layer['label'];
+            }
         }
-        $enabledLayerNames = array_diff(array_keys($layerOptions), $selection->disabledLayers);
-        $keptLayers = multiselect(
-            label: 'Layers to keep enabled',
-            options: $layerOptions,
-            default: array_values($enabledLayerNames),
-            scroll: 8,
-        );
-        $disabledLayers = array_values(array_diff(array_keys($layerOptions), $keptLayers));
+        $disabledLayers = $selection->disabledLayers;
+        if ($stockLayerOptions !== []) {
+            $enabledStock = array_diff(array_keys($stockLayerOptions), $disabledLayers);
+            $keptStock = multiselect(
+                label: 'Stock layers to keep enabled',
+                options: $stockLayerOptions,
+                default: array_values($enabledStock),
+                scroll: 8,
+            );
+            $disabledLayers = array_values(array_diff(array_keys($stockLayerOptions), $keptStock));
+        }
 
-        // Forced add-ons (from current profile-group choices) are excluded from the
-        // multiselect — they're always on.
+        // Forced add-ons / non-stock layers (from current profile-group choices)
+        // are excluded from their respective multiselects — they're always on.
         $tentative = new Selection(
             $version, $profile, $disabledSets, $disabledLayers,
-            $selection->enabledAddons, $profileGroups,
+            $selection->enabledLayers, $selection->enabledAddons, $profileGroups,
         );
-        $forced = $configurator->forcedAddons($tentative);
-        $userPickable = array_diff_key($defs->addons, array_flip($forced));
+        $forcedAddons = $configurator->forcedAddons($tentative);
+        $forcedLayers = $configurator->forcedLayers($tentative);
+
+        $enabledLayers = $selection->enabledLayers;
+        $userPickableLayers = array_diff_key($addonLayerOptions, array_flip($forcedLayers));
+        if ($userPickableLayers !== []) {
+            $enabledLayers = multiselect(
+                label: 'Optional non-stock layers',
+                options: $userPickableLayers,
+                default: array_values(array_intersect(array_keys($userPickableLayers), $enabledLayers)),
+                scroll: 8,
+            );
+        }
+
         $enabledAddons = $selection->enabledAddons;
-        if ($userPickable !== []) {
+        $userPickableAddons = array_diff_key($defs->addons, array_flip($forcedAddons));
+        if ($userPickableAddons !== []) {
             $addonOptions = [];
-            foreach ($userPickable as $name => $addon) {
+            foreach ($userPickableAddons as $name => $addon) {
                 $addonOptions[$name] = $addon['label'];
             }
             $enabledAddons = multiselect(
@@ -179,8 +204,12 @@ class ConfigureCommand extends Command
                 scroll: 8,
             );
         }
-        if ($forced !== []) {
-            info('Auto-enabled add-ons (from profile groups): '.implode(', ', $forced));
+
+        if ($forcedAddons !== []) {
+            info('Auto-enabled add-ons (from profile groups): '.implode(', ', $forcedAddons));
+        }
+        if ($forcedLayers !== []) {
+            info('Auto-enabled layers (from profile groups): '.implode(', ', $forcedLayers));
         }
 
         info("Configured for Mage-OS $version (profile: $profile)");
@@ -190,6 +219,7 @@ class ConfigureCommand extends Command
             profile: $profile,
             disabledSets: $disabledSets,
             disabledLayers: $disabledLayers,
+            enabledLayers: array_values($enabledLayers),
             enabledAddons: array_values($enabledAddons),
             profileGroups: $profileGroups,
         );

@@ -52,6 +52,7 @@ class ConfiguratorController extends Controller
             'requireCount' => count($composer['require'] ?? []),
             'replaceCount' => count($composer['replace'] ?? []),
             'forcedAddons' => $this->configurator->forcedAddons($selection),
+            'forcedLayers' => $this->configurator->forcedLayers($selection),
         ]);
     }
 
@@ -81,6 +82,7 @@ class ConfiguratorController extends Controller
             profile: $data['profile'] ?? $base->profile,
             disabledSets: array_values($data['disabledSets'] ?? $base->disabledSets),
             disabledLayers: array_values($data['disabledLayers'] ?? $base->disabledLayers),
+            enabledLayers: array_values($data['enabledLayers'] ?? $base->enabledLayers),
             enabledAddons: array_values($data['enabledAddons'] ?? $base->enabledAddons),
             profileGroups: $data['profileGroups'] ?? $base->profileGroups,
         );
@@ -95,6 +97,7 @@ class ConfiguratorController extends Controller
             'layers' => $this->defs->layers,
             'addons' => $this->defs->addons,
             'forcedAddons' => $this->configurator->forcedAddons($selection),
+            'forcedLayers' => $this->configurator->forcedLayers($selection),
             'profileGroups' => $this->defs->profileGroups,
             'profiles' => $this->defs->profiles,
             'initialComposer' => $this->renderer->render($this->configurator->build($selection)),

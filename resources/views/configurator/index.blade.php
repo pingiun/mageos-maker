@@ -90,7 +90,28 @@
         @endforeach
 
         <div class="panel">
-            <h2>Modules (sets)</h2>
+            <h2>Add-ons</h2>
+            <p style="font-size:12px;color:#666;margin:0 0 8px;">Extra packages outside stock Mage-OS. Greyed-out items are forced by your current profile-group choices.</p>
+            <div class="checkbox-list" id="addon-list">
+                @foreach ($addons as $name => $addon)
+                    @php $isForced = in_array($name, $forcedAddons, true); @endphp
+                    <label class="{{ $isForced ? 'forced' : '' }}">
+                        <input type="checkbox" name="addon" value="{{ $name }}"
+                            @checked($isForced || in_array($name, $selection->enabledAddons, true))
+                            @disabled($isForced)
+                            data-forced="{{ $isForced ? '1' : '0' }}">
+                        <span>
+                            <strong>{{ $addon['label'] }}</strong>
+                            @if ($isForced) <span class="pill">required</span> @endif
+                            <span class="desc">{{ $addon['description'] ?? '' }}</span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Modules</h2>
             <div class="checkbox-list">
                 @foreach ($sets as $name => $set)
                     <label>
@@ -106,34 +127,29 @@
 
         <div class="panel">
             <h2>Layers</h2>
-            <div class="checkbox-list">
+            <p style="font-size:12px;color:#666;margin:0 0 8px;">Cross-cutting concerns. Stock layers are on by default; non-stock layers are off unless forced by your profile-group choices.</p>
+            <div class="checkbox-list" id="layer-list">
                 @foreach ($layers as $name => $layer)
-                    <label>
-                        <input type="checkbox" name="layer" value="{{ $name }}" @checked(! in_array($name, $selection->disabledLayers, true))>
-                        <span>
-                            <strong>{{ $layer['label'] }}</strong>
-                            <span class="desc">{{ $layer['description'] ?? '' }}</span>
-                        </span>
-                    </label>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2>Add-ons</h2>
-            <p style="font-size:12px;color:#666;margin:0 0 8px;">Extra packages outside stock Mage-OS. Greyed-out add-ons are forced by your current profile-group choices.</p>
-            <div class="checkbox-list" id="addon-list">
-                @foreach ($addons as $name => $addon)
-                    @php $isForced = in_array($name, $forcedAddons, true); @endphp
+                    @php
+                        $isStock = ($layer['stock'] ?? true) !== false;
+                        $isForced = in_array($name, $forcedLayers, true);
+                        if ($isStock) {
+                            $checked = ! in_array($name, $selection->disabledLayers, true);
+                        } else {
+                            $checked = $isForced || in_array($name, $selection->enabledLayers, true);
+                        }
+                    @endphp
                     <label class="{{ $isForced ? 'forced' : '' }}">
-                        <input type="checkbox" name="addon" value="{{ $name }}"
-                            @checked($isForced || in_array($name, $selection->enabledAddons, true))
+                        <input type="checkbox" name="layer" value="{{ $name }}"
+                            @checked($checked)
                             @disabled($isForced)
+                            data-stock="{{ $isStock ? '1' : '0' }}"
                             data-forced="{{ $isForced ? '1' : '0' }}">
                         <span>
-                            <strong>{{ $addon['label'] }}</strong>
+                            <strong>{{ $layer['label'] }}</strong>
                             @if ($isForced) <span class="pill">required</span> @endif
-                            <span class="desc">{{ $addon['description'] ?? '' }}</span>
+                            @if (! $isStock && ! $isForced) <span class="pill" style="background:#fff3cd;color:#664">add-on</span> @endif
+                            <span class="desc">{{ $layer['description'] ?? '' }}</span>
                         </span>
                     </label>
                 @endforeach
@@ -225,7 +241,7 @@
         }
     }
 
-    function setComposer(json, requireCount, replaceCount, forcedAddons) {
+    function setComposer(json, requireCount, replaceCount, forcedAddons, forcedLayers) {
         const el = document.getElementById('composer-out');
         const pre = el.parentElement;
         const changed = diffLineIndices(lastJson, json);
@@ -235,17 +251,26 @@
         hljs.highlightElement(el);
         flashChangedLines(pre, el, groupRanges(changed));
         document.getElementById('stats').textContent = `require: ${requireCount} · replace: ${replaceCount}`;
-        if (Array.isArray(forcedAddons)) applyForcedAddons(forcedAddons);
+        if (Array.isArray(forcedAddons)) applyForcedFlags('#addon-list', 'addon', forcedAddons);
+        if (Array.isArray(forcedLayers)) applyForcedFlags('#layer-list', 'layer', forcedLayers);
     }
 
     function gatherSelection() {
         const disabledSets = [];
         document.querySelectorAll('input[name=set]').forEach(el => { if (!el.checked) disabledSets.push(el.value); });
         const disabledLayers = [];
-        document.querySelectorAll('input[name=layer]').forEach(el => { if (!el.checked) disabledLayers.push(el.value); });
+        const enabledLayers = [];
+        document.querySelectorAll('input[name=layer]').forEach(el => {
+            // Stock layers: track unchecked. Non-stock layers: track manually-checked
+            // (forced ones are added back by the server).
+            if (el.dataset.stock === '1') {
+                if (!el.checked) disabledLayers.push(el.value);
+            } else {
+                if (el.checked && el.dataset.forced !== '1') enabledLayers.push(el.value);
+            }
+        });
         const enabledAddons = [];
         document.querySelectorAll('input[name=addon]').forEach(el => {
-            // Forced addons are always included by the server; don't double-send them.
             if (el.checked && el.dataset.forced !== '1') enabledAddons.push(el.value);
         });
         const profileGroups = {};
@@ -257,28 +282,32 @@
             profile: document.querySelector('input[name=profile]:checked')?.value || null,
             disabledSets,
             disabledLayers,
+            enabledLayers,
             enabledAddons,
             profileGroups,
         };
     }
 
-    function applyForcedAddons(forced) {
+    function applyForcedFlags(listSelector, inputName, forced) {
         const set = new Set(forced);
-        document.querySelectorAll('#addon-list label').forEach(label => {
-            const input = label.querySelector('input[name=addon]');
+        document.querySelectorAll(`${listSelector} label`).forEach(label => {
+            const input = label.querySelector(`input[name=${inputName}]`);
+            if (!input) return;
             const isForced = set.has(input.value);
             input.dataset.forced = isForced ? '1' : '0';
             input.disabled = isForced;
             if (isForced) input.checked = true;
             label.classList.toggle('forced', isForced);
-            // Pill management: add/remove a `required` pill alongside the label.
+            // Required pill — only one per label, only when forced.
             const existing = label.querySelector('.pill');
-            if (isForced && !existing) {
+            const isRequiredPill = existing && existing.textContent === 'required';
+            if (isForced && !isRequiredPill) {
+                if (existing && !isRequiredPill) existing.remove();
                 const pill = document.createElement('span');
                 pill.className = 'pill';
                 pill.textContent = 'required';
                 label.querySelector('strong').after(' ', pill);
-            } else if (!isForced && existing) {
+            } else if (!isForced && isRequiredPill) {
                 existing.remove();
             }
         });
@@ -294,7 +323,7 @@
                 body: JSON.stringify({selection: gatherSelection()}),
             });
             const data = await res.json();
-            setComposer(data.composer, data.requireCount, data.replaceCount, data.forcedAddons);
+            setComposer(data.composer, data.requireCount, data.replaceCount, data.forcedAddons, data.forcedLayers);
         }, 80);
     }
 

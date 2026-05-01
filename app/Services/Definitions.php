@@ -37,6 +37,19 @@ class Definitions
         return $this->addons[$name]['packages'] ?? [];
     }
 
+    /**
+     * Whether a layer's packages are part of stock Mage-OS.
+     * Stock layers are subtractive (disable adds to `replace`).
+     * Non-stock layers are additive (enable adds to `require`).
+     * Defaults to true when the YAML omits the flag.
+     */
+    public function isLayerStock(string $name): bool
+    {
+        return ! array_key_exists($name, $this->layers)
+            ? true
+            : ($this->layers[$name]['stock'] ?? true) !== false;
+    }
+
     public function profileGroupOption(string $group, string $option): ?array
     {
         foreach ($this->profileGroups[$group]['options'] ?? [] as $opt) {

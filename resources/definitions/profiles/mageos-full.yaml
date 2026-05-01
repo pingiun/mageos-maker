@@ -5,6 +5,7 @@ default: true
 selection:
   disabledSets: []
   disabledLayers: []
+  enabledLayers: []
   enabledAddons: []
   profileGroups:
     theme: luma
