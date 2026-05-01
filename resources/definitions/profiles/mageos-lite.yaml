@@ -1,0 +1,11 @@
+name: mageos-lite
+label: Mage-OS Lite
+description: Bare-minimum webshop — wishlist, gift messages, login-as-customer, multi-source inventory and analytics turned off
+selection:
+  enabledSets: []
+  disabledSets: [wishlist, gift-message, inventory, login-as-customer, admin-analytics]
+  enabledLayers: []
+  disabledLayers: []
+  profileGroups:
+    theme: luma
+    checkout: default

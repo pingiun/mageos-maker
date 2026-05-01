@@ -1,0 +1,6 @@
+name: gift-message
+label: Gift Messages
+description: Gift message support on cart and checkout
+packages:
+  - mage-os/module-gift-message
+  - mage-os/module-gift-message-graph-ql

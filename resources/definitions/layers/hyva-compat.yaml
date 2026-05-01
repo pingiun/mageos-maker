@@ -1,0 +1,5 @@
+name: hyva-compat
+label: Hyvä Compatibility Modules
+description: Bridge modules connecting Hyvä to common Magento extensions
+packages:
+  - hyva-themes/magento2-compat-module-fallback

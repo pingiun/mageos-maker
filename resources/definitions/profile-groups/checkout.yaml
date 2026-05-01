@@ -1,0 +1,11 @@
+name: checkout
+label: Checkout
+description: Checkout implementation
+options:
+  - name: default
+    label: Luma checkout
+    default: true
+  - name: hyva-checkout
+    label: Hyvä Checkout
+    enables:
+      sets: [hyva-checkout]

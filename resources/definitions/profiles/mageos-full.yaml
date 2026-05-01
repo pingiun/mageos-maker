@@ -1,0 +1,12 @@
+name: mageos-full
+label: Mage-OS Full
+description: Stock Mage-OS Community Edition with everything enabled (default)
+default: true
+selection:
+  enabledSets: []
+  disabledSets: []
+  enabledLayers: []
+  disabledLayers: []
+  profileGroups:
+    theme: luma
+    checkout: default

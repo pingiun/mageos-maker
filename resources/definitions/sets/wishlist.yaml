@@ -1,0 +1,7 @@
+name: wishlist
+label: Wishlist
+description: Customer wishlist functionality
+packages:
+  - mage-os/module-wishlist
+  - mage-os/module-wishlist-analytics
+  - mage-os/module-wishlist-graph-ql

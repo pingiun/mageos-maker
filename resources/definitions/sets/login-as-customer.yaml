@@ -1,0 +1,14 @@
+name: login-as-customer
+label: Login as Customer
+description: Admin tooling to log in as a customer for support
+packages:
+  - mage-os/module-login-as-customer
+  - mage-os/module-login-as-customer-admin-ui
+  - mage-os/module-login-as-customer-api
+  - mage-os/module-login-as-customer-assistance
+  - mage-os/module-login-as-customer-frontend-ui
+  - mage-os/module-login-as-customer-graph-ql
+  - mage-os/module-login-as-customer-log
+  - mage-os/module-login-as-customer-page-cache
+  - mage-os/module-login-as-customer-quote
+  - mage-os/module-login-as-customer-sales

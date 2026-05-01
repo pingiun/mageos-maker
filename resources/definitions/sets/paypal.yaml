@@ -1,0 +1,7 @@
+name: paypal
+label: PayPal
+description: PayPal payment integration
+packages:
+  - mage-os/module-paypal
+  - mage-os/module-paypal-captcha
+  - mage-os/module-paypal-graph-ql

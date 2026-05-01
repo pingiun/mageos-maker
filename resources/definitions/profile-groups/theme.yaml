@@ -1,0 +1,16 @@
+name: theme
+label: Theme
+description: Storefront theme
+options:
+  - name: luma
+    label: Luma
+    default: true
+    # Luma ships with stock Mage-OS — no `enables` needed.
+    # The `luma` set still exists so other themes can list it under `disables`.
+  - name: hyva
+    label: Hyvä
+    enables:
+      sets: [hyva]
+      layers: [hyva-compat]
+    disables:
+      sets: [luma]

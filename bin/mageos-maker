@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Thin wrapper around `php artisan mageos:configure` so end users
+# don't need to know it's a Laravel app.
+DIR=$(cd "$(dirname "$0")/.." && pwd)
+exec php "$DIR/artisan" mageos:configure "$@"

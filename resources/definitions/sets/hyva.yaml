@@ -1,0 +1,8 @@
+name: hyva
+label: Hyvä Theme
+description: Hyvä storefront theme (commercial license required)
+packages:
+  - hyva-themes/magento2-default-theme
+  - hyva-themes/magento2-theme-module
+  - hyva-themes/magento2-email-module
+  - hyva-themes/magento2-reset-theme

@@ -1,0 +1,6 @@
+name: inventory
+label: Multi-Source Inventory
+description: Multi-source inventory and reservations
+packages:
+  - mage-os/inventory-metapackage
+  - mage-os/module-inventory-reservations-grid

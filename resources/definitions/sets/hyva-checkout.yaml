@@ -1,0 +1,5 @@
+name: hyva-checkout
+label: Hyvä Checkout
+description: Hyvä Checkout React replacement (commercial)
+packages:
+  - hyva-themes/magento2-hyva-checkout

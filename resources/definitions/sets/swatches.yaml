@@ -1,0 +1,7 @@
+name: swatches
+label: Color/Image Swatches
+description: Product swatch attributes and layered nav
+packages:
+  - mage-os/module-swatches
+  - mage-os/module-swatches-graph-ql
+  - mage-os/module-swatches-layered-navigation

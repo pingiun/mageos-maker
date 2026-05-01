@@ -1,0 +1,8 @@
+name: admin-analytics
+label: Admin Analytics
+description: Analytics and reporting modules in the admin
+packages:
+  - mage-os/module-catalog-analytics
+  - mage-os/module-customer-analytics
+  - mage-os/module-sales-analytics
+  - mage-os/module-wishlist-analytics
