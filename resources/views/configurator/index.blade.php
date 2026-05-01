@@ -131,28 +131,35 @@
 
         <div class="panel">
             <h2>Layers</h2>
-            <p style="font-size:12px;color:#666;margin:0 0 8px;">Cross-cutting concerns. Stock layers are on by default; non-stock layers are off unless your profile-group choices enable them.</p>
+            <p style="font-size:12px;color:#666;margin:0 0 8px;">Cross-cutting concerns. Stock layers are on by default; non-stock layers are managed by your profile-group choices.</p>
             <div class="checkbox-list" id="layer-list">
                 @foreach ($layers as $name => $layer)
                     @php
                         $isStock = ($layer['stock'] ?? true) !== false;
                         $isForced = in_array($name, $forcedLayers, true);
                         $isDefaulted = in_array($name, $defaultedLayers, true);
+                        // Non-stock layers are entirely profile-group-managed; the user
+                        // never toggles them directly.
+                        $isAuto = ! $isStock;
                         if ($isStock) {
                             $checked = ! in_array($name, $selection->disabledLayers, true);
                         } else {
-                            $checked = $isForced || in_array($name, $selection->enabledLayers, true) || $isDefaulted;
+                            $checked = $isForced || $isDefaulted;
                         }
+                        $locked = $isForced || $isAuto;
                     @endphp
-                    <label class="{{ $isForced ? 'forced' : '' }}">
+                    <label class="{{ $locked ? 'forced' : '' }}">
                         <input type="checkbox" name="layer" value="{{ $name }}"
                             @checked($checked)
-                            @disabled($isForced)
+                            @disabled($locked)
                             data-stock="{{ $isStock ? '1' : '0' }}"
+                            data-auto="{{ $isAuto ? '1' : '0' }}"
                             data-forced="{{ $isForced ? '1' : '0' }}">
                         <span>
                             <strong>{{ $layer['label'] }}</strong>
-                            @if ($isForced) <span class="pill">required</span> @endif
+                            @if ($isForced) <span class="pill">required</span>
+                            @elseif ($isAuto) <span class="pill">auto</span>
+                            @endif
                             <span class="desc">{{ $layer['description'] ?? '' }}</span>
                         </span>
                     </label>
@@ -328,20 +335,23 @@
             const input = label.querySelector(`input[name=${inputName}]`);
             if (!input) return;
             const isForced = set.has(input.value);
+            const isAuto = input.dataset.auto === '1';
             input.dataset.forced = isForced ? '1' : '0';
-            input.disabled = isForced;
+            // Always-disabled inputs (auto) keep `disabled` regardless of forced state.
+            input.disabled = isForced || isAuto;
             if (isForced) input.checked = true;
-            label.classList.toggle('forced', isForced);
-            // Required pill — only one per label, only when forced.
+            label.classList.toggle('forced', isForced || isAuto);
+            // Pill: "required" while forced, "auto" while non-stock-but-not-forced.
             const existing = label.querySelector('.pill');
-            const isRequiredPill = existing && existing.textContent === 'required';
-            if (isForced && !isRequiredPill) {
-                if (existing && !isRequiredPill) existing.remove();
+            const wantText = isForced ? 'required' : (isAuto ? 'auto' : null);
+            const haveText = existing ? existing.textContent : null;
+            if (wantText && haveText !== wantText) {
+                if (existing) existing.remove();
                 const pill = document.createElement('span');
                 pill.className = 'pill';
-                pill.textContent = 'required';
+                pill.textContent = wantText;
                 label.querySelector('strong').after(' ', pill);
-            } else if (!isForced && isRequiredPill) {
+            } else if (!wantText && existing) {
                 existing.remove();
             }
         });
