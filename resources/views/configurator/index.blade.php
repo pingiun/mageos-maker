@@ -176,6 +176,7 @@
 <script>
     const csrf = document.querySelector('meta[name=csrf-token]').content;
     const PROFILES = @json($profiles);
+    const PROFILE_GROUPS = @json($profileGroups);
     let lastJson = document.getElementById('composer-out').textContent;
     // Track soft-default lists from the previous server response so we can
     // diff and apply changes on the next response (auto-check newly defaulted
@@ -360,10 +361,44 @@
         }, 80);
     }
 
+    // Compute soft-defaults locally from profile-group YAML so we can pre-check
+    // the boxes BEFORE issuing the preview request. Without this, the request
+    // would gather a still-unchecked form and the server would emit a JSON
+    // missing the about-to-be-checked packages.
+    function deriveDefaultsFromGroups() {
+        const groups = {};
+        document.querySelectorAll('input[type=radio][name^="pg-"]:checked').forEach(el => {
+            groups[el.name.slice(3)] = el.value;
+        });
+        const addons = [], layers = [];
+        for (const [group, optionName] of Object.entries(groups)) {
+            const def = PROFILE_GROUPS[group];
+            if (!def) continue;
+            const opt = (def.options || []).find(o => o.name === optionName);
+            if (!opt) continue;
+            const en = opt.enables || {};
+            addons.push(...(en.addons || []));
+            layers.push(...(en.layers || []));
+        }
+        return {addons, layers};
+    }
+
+    function syncDefaultsThenRefresh() {
+        const d = deriveDefaultsFromGroups();
+        applySoftDefaults('#addon-list', 'addon', d.addons, prevDefaultedAddons);
+        applySoftDefaults('#layer-list', 'layer', d.layers, prevDefaultedLayers);
+        prevDefaultedAddons = d.addons;
+        prevDefaultedLayers = d.layers;
+        refresh();
+    }
+
     document.querySelectorAll('input, select').forEach(el => el.addEventListener('change', e => {
         if (e.target.name === 'profile') {
-            // Reload from server with the chosen profile pre-applied.
             applyProfile(e.target.value);
+            return;
+        }
+        if (e.target.name && e.target.name.startsWith('pg-')) {
+            syncDefaultsThenRefresh();
             return;
         }
         refresh();
@@ -396,11 +431,11 @@
             if (radio) radio.checked = true;
         });
 
-        // We just rewrote the form; reset soft-default tracking so the next
-        // refresh re-applies any defaulted items from the resolved state.
+        // We just rewrote the form; let the profile-group syncer re-apply
+        // soft defaults on top of the new radio state, then refresh.
         prevDefaultedAddons = [];
         prevDefaultedLayers = [];
-        refresh();
+        syncDefaultsThenRefresh();
     }
 
     function copyComposer() {
