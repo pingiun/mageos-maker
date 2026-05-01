@@ -340,6 +340,9 @@
             // Always-disabled inputs (auto) keep `disabled` regardless of forced state.
             input.disabled = isForced || isAuto;
             if (isForced) input.checked = true;
+            // Auto inputs are entirely profile-group-managed: their state mirrors
+            // `forced` exactly. Unforced auto items must uncheck.
+            else if (isAuto) input.checked = false;
             label.classList.toggle('forced', isForced || isAuto);
             // Pill: "required" while forced, "auto" while non-stock-but-not-forced.
             const existing = label.querySelector('.pill');
