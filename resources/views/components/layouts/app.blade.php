@@ -40,6 +40,17 @@
         .pill { display: inline-block; background: #eef; color: #226; font-size: 11px; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
         .checkbox-list label.forced { opacity: 0.7; cursor: not-allowed; }
         .checkbox-list label.forced:hover { background: transparent; }
+        .hyva-panel a { color: #2563eb; }
+        .hyva-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .hyva-fields label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #555; }
+        .hyva-fields input { padding: 6px 8px; border: 1px solid #d0d0d6; border-radius: 4px; font-size: 13px; font-family: ui-monospace, Menlo, monospace; }
+        .hyva-steps { list-style: decimal; padding-left: 22px; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+        .hyva-steps li { font-size: 13px; }
+        .hyva-steps .step-label { display: block; color: #444; margin-bottom: 4px; font-weight: 500; }
+        pre.cmd { background: #1e1e23; color: #e6e6e6; padding: 10px 12px; margin: 0; border-radius: 4px; font-size: 12px; line-height: 1.45; overflow-x: auto; white-space: pre; }
+        pre.cmd code { font-family: ui-monospace, Menlo, monospace; }
+        .hyva-steps small { display: block; margin-top: 4px; color: #777; font-size: 11px; }
+        .hyva-steps small code { background: #f0f0f4; padding: 1px 4px; border-radius: 3px; }
     </style>
     @livewireStyles
 </head>

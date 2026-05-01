@@ -43,6 +43,12 @@ class Configurator extends Component
 
     public ?string $savedAt = null;
 
+    /** Hyvä packagist authentication token (free, obtained at hyva.io). */
+    public string $hyvaToken = '';
+
+    /** Hyvä packagist project name slug (the path component of your composer repo URL). */
+    public string $hyvaProject = '';
+
     /**
      * Defaulted-addons list from the previous resolved state, persisted across
      * Livewire requests so we can diff and apply soft-default deltas.
@@ -300,6 +306,25 @@ class Configurator extends Component
     public function defaultedAddons(): array
     {
         return app(ConfiguratorService::class)->defaultedAddons($this->selection());
+    }
+
+    /**
+     * True iff the generated composer.json pulls in any hyva-themes/* package
+     * (theme=hyva, hyva-checkout, etc.). Used to gate the install-instructions panel.
+     */
+    #[Computed]
+    public function usesHyva(): bool
+    {
+        $defs = app(Definitions::class);
+        $addonsInUse = array_unique(array_merge($this->enabledAddons, $this->forcedAddons));
+        foreach ($addonsInUse as $name) {
+            foreach ($defs->addonPackages($name) as $pkg) {
+                if (str_starts_with($pkg, 'hyva-themes/')) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private function hydrateFromSelection(Selection $sel, Definitions $defs, ConfiguratorService $configurator): void
