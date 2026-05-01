@@ -28,8 +28,11 @@
         .radio-group { display: flex; flex-direction: column; gap: 6px; }
         .radio-group label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
         .right { display: flex; flex-direction: column; gap: 16px; }
-        pre.composer { padding: 0; border-radius: 6px; overflow: auto; font-size: 12.5px; line-height: 1.55; max-height: 78vh; margin: 0; }
-        pre.composer code.hljs { padding: 18px 20px; background: #1e1e23; border-radius: 6px; }
+        pre.composer { padding: 0; border-radius: 6px; overflow: auto; font-size: 12.5px; line-height: 1.55; max-height: 78vh; margin: 0; position: relative; }
+        pre.composer code.hljs { display: block; padding: 18px 20px; background: #1e1e23; border-radius: 6px; position: relative; z-index: 1; }
+        .diff-overlay { position: absolute; left: 0; right: 0; top: 18px; pointer-events: none; z-index: 2; }
+        .diff-overlay .strip { position: absolute; left: 0; right: 0; background: rgba(250, 204, 21, 0.32); border-left: 2px solid rgba(250, 204, 21, 0.85); animation: diffFade 1.8s ease-out forwards; mix-blend-mode: screen; }
+        @keyframes diffFade { 0% { opacity: 1; } 70% { opacity: 0.6; } 100% { opacity: 0; } }
         .toolbar { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .toolbar .stats { font-size: 12px; color: #ccc; margin-left: auto; }
         button { background: #2563eb; color: #fff; border: 0; padding: 8px 14px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; }
@@ -129,12 +132,76 @@
 
 <script>
     const csrf = document.querySelector('meta[name=csrf-token]').content;
+    let lastJson = document.getElementById('composer-out').textContent;
+
+    // Returns the set of new-line indices whose content changed vs. the old text.
+    // Standard LCS over lines; fast enough for typical composer.json sizes.
+    function diffLineIndices(oldStr, newStr) {
+        const oldLines = oldStr.split('\n');
+        const newLines = newStr.split('\n');
+        const m = oldLines.length, n = newLines.length;
+        if (m === 0 || n === 0) return new Set(newLines.map((_, i) => i));
+        // Build LCS length table.
+        const lcs = Array.from({length: m + 1}, () => new Uint16Array(n + 1));
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                lcs[i][j] = oldLines[i-1] === newLines[j-1]
+                    ? lcs[i-1][j-1] + 1
+                    : Math.max(lcs[i-1][j], lcs[i][j-1]);
+            }
+        }
+        // Backtrack: any new-line index NOT on the LCS path is "changed".
+        const changed = new Set();
+        let i = m, j = n;
+        while (i > 0 && j > 0) {
+            if (oldLines[i-1] === newLines[j-1]) { i--; j--; }
+            else if (lcs[i-1][j] >= lcs[i][j-1]) { i--; }
+            else { changed.add(j - 1); j--; }
+        }
+        while (j > 0) { changed.add(j - 1); j--; }
+        return changed;
+    }
+
+    // Group consecutive line indices into [start, end] ranges.
+    function groupRanges(indices) {
+        const sorted = [...indices].sort((a, b) => a - b);
+        const ranges = [];
+        for (const i of sorted) {
+            const last = ranges[ranges.length - 1];
+            if (last && i === last[1] + 1) last[1] = i;
+            else ranges.push([i, i]);
+        }
+        return ranges;
+    }
+
+    function flashChangedLines(preEl, codeEl, changedRanges) {
+        // Drop any previous overlay so re-renders don't accumulate.
+        preEl.querySelectorAll('.diff-overlay').forEach(o => o.remove());
+        if (changedRanges.length === 0) return;
+        const lineHeight = parseFloat(getComputedStyle(codeEl).lineHeight);
+        const overlay = document.createElement('div');
+        overlay.className = 'diff-overlay';
+        for (const [start, end] of changedRanges) {
+            const strip = document.createElement('div');
+            strip.className = 'strip';
+            strip.style.top = (start * lineHeight) + 'px';
+            strip.style.height = ((end - start + 1) * lineHeight) + 'px';
+            overlay.appendChild(strip);
+        }
+        preEl.appendChild(overlay);
+        // Auto-cleanup after the animation finishes.
+        setTimeout(() => overlay.remove(), 2000);
+    }
 
     function setComposer(json, requireCount, replaceCount) {
         const el = document.getElementById('composer-out');
+        const pre = el.parentElement;
+        const changed = diffLineIndices(lastJson, json);
+        lastJson = json;
         el.textContent = json;
         delete el.dataset.highlighted;
         hljs.highlightElement(el);
+        flashChangedLines(pre, el, groupRanges(changed));
         document.getElementById('stats').textContent = `require: ${requireCount} · replace: ${replaceCount}`;
     }
 
