@@ -71,16 +71,28 @@ class Configurator extends Component
     }
 
     /**
-     * Re-apply soft defaults whenever a profile-group choice changes.
+     * Generic update hook — fires for any property change, including nested
+     * array key updates (e.g. wire:model="profileGroups.theme"), where the
+     * specific updatedProfileGroups() hook is not invoked by Livewire 4.
      *
-     * Diffs the new defaultedAddons list against the previous one and adds/removes
-     * from $enabledAddons accordingly. (Bidirectional sync from the inverse direction
-     * — toggling an addon back-to-update a profile-group — is handled in
-     * {@see updatedEnabledAddons()}.)
+     * Routes profile-group changes into the soft-default pass.
      */
-    public function updatedProfileGroups(): void
+    public function updated(string $name): void
     {
-        $defaulted = app(ConfiguratorService::class)->defaultedAddons($this->selection);
+        if ($name === 'profileGroups' || str_starts_with($name, 'profileGroups.')) {
+            $this->reapplySoftDefaults();
+        }
+    }
+
+    /**
+     * Diff new defaultedAddons against the previous tracker and add/remove
+     * from $enabledAddons accordingly. (Bidirectional sync from the inverse
+     * direction — toggling an addon back-to-update a profile-group — is
+     * handled in updatedEnabledAddons().)
+     */
+    private function reapplySoftDefaults(): void
+    {
+        $defaulted = app(ConfiguratorService::class)->defaultedAddons($this->selection());
 
         $newlyDefaulted = array_values(array_diff($defaulted, $this->previousDefaultedAddons));
         $undefaulted = array_values(array_diff($this->previousDefaultedAddons, $defaulted));
@@ -120,7 +132,7 @@ class Configurator extends Component
 
         // Re-run the soft-default pass since profile-groups may have changed.
         if ($added || $removed) {
-            $this->updatedProfileGroups();
+            $this->reapplySoftDefaults();
         }
     }
 
@@ -215,15 +227,19 @@ class Configurator extends Component
     {
         $cfg = SavedConfig::create([
             'mageos_version' => $this->version,
-            'selection' => $this->selection->toArray(),
+            'selection' => $this->selection()->toArray(),
         ]);
         return $this->redirect(route('configurator.show', $cfg->id), navigate: true);
     }
 
     /**
      * Build a Selection from the current public state.
+     *
+     * Intentionally NOT a #[Computed] property: state can mutate multiple times
+     * within a single request lifecycle (reapplySoftDefaults() runs after a
+     * profile-group radio update and itself reads selection() to compute the new
+     * defaultedAddons). Caching would hand back a stale Selection.
      */
-    #[Computed]
     public function selection(): Selection
     {
         $defs = app(Definitions::class);
@@ -247,7 +263,7 @@ class Configurator extends Component
     #[Computed]
     public function composer(): array
     {
-        return app(ConfiguratorService::class)->build($this->selection);
+        return app(ConfiguratorService::class)->build($this->selection());
     }
 
     #[Computed]
@@ -271,19 +287,19 @@ class Configurator extends Component
     #[Computed]
     public function forcedAddons(): array
     {
-        return app(ConfiguratorService::class)->forcedAddons($this->selection);
+        return app(ConfiguratorService::class)->forcedAddons($this->selection());
     }
 
     #[Computed]
     public function forcedLayers(): array
     {
-        return app(ConfiguratorService::class)->forcedLayers($this->selection);
+        return app(ConfiguratorService::class)->forcedLayers($this->selection());
     }
 
     #[Computed]
     public function defaultedAddons(): array
     {
-        return app(ConfiguratorService::class)->defaultedAddons($this->selection);
+        return app(ConfiguratorService::class)->defaultedAddons($this->selection());
     }
 
     private function hydrateFromSelection(Selection $sel, Definitions $defs, ConfiguratorService $configurator): void
