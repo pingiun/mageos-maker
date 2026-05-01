@@ -383,6 +383,38 @@
         return {addons, layers};
     }
 
+    // Bidirectional coupling between soft-defaulted items and profile-group radios:
+    //
+    //  - If the user UNCHECKS a soft-defaulted item, snap the responsible group
+    //    back to its default option (e.g. uncheck hyva addon → theme back to luma).
+    //  - If the user CHECKS an item that some profile-group option soft-defaults,
+    //    snap that group to that option (e.g. check hyva addon → theme = hyva).
+    function syncGroupsForToggle(kind, value, nowChecked) {
+        for (const [groupName, def] of Object.entries(PROFILE_GROUPS)) {
+            const current = document.querySelector(`input[name="pg-${groupName}"]:checked`);
+            if (!current) continue;
+            const currentOpt = (def.options || []).find(o => o.name === current.value);
+
+            if (!nowChecked) {
+                // Unchecked path: only act if the currently-selected option enabled this item.
+                if (!currentOpt) continue;
+                const enables = (currentOpt.enables || {})[kind] || [];
+                if (!enables.includes(value)) continue;
+                const fallback = (def.options || []).find(o => o.default) || (def.options || [])[0];
+                if (!fallback || fallback.name === current.value) continue;
+                const fbRadio = document.querySelector(`input[name="pg-${groupName}"][value="${fallback.name}"]`);
+                if (fbRadio) fbRadio.checked = true;
+            } else {
+                // Checked path: find any option that soft-defaults this item; if it
+                // isn't the current selection, switch to it.
+                const wanted = (def.options || []).find(o => ((o.enables || {})[kind] || []).includes(value));
+                if (!wanted || wanted.name === current.value) continue;
+                const wRadio = document.querySelector(`input[name="pg-${groupName}"][value="${wanted.name}"]`);
+                if (wRadio) wRadio.checked = true;
+            }
+        }
+    }
+
     function syncDefaultsThenRefresh() {
         const d = deriveDefaultsFromGroups();
         applySoftDefaults('#addon-list', 'addon', d.addons, prevDefaultedAddons);
@@ -398,6 +430,15 @@
             return;
         }
         if (e.target.name && e.target.name.startsWith('pg-')) {
+            syncDefaultsThenRefresh();
+            return;
+        }
+        // Toggling an addon/layer may need to flip a profile-group radio
+        // to keep the two views in sync.
+        if ((e.target.name === 'addon' || e.target.name === 'layer') && e.target.dataset.forced !== '1') {
+            const kind = e.target.name === 'addon' ? 'addons' : 'layers';
+            syncGroupsForToggle(kind, e.target.value, e.target.checked);
+            // A radio may have just been flipped — re-apply soft defaults.
             syncDefaultsThenRefresh();
             return;
         }
