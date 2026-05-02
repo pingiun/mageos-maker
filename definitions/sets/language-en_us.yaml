@@ -1,0 +1,6 @@
+name: language-en_us
+label: English (United States)
+category: language
+description: Stock Mage-OS translation pack for English (United States)
+packages:
+  - mage-os/language-en_us

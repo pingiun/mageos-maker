@@ -27,12 +27,17 @@ packages:
   - mage-os/module-graph-ql-resolver-cache
   - mage-os/module-grouped-product-graph-ql
   - mage-os/module-integration-graph-ql
+  - mage-os/module-inventory-graph-ql
+  - mage-os/module-inventory-in-store-pickup-graph-ql
+  - mage-os/module-inventory-in-store-pickup-quote-graph-ql
+  - mage-os/module-inventory-quote-graph-ql
   - mage-os/module-login-as-customer-graph-ql
   - mage-os/module-newsletter-graph-ql
   - mage-os/module-order-cancellation-graph-ql
   - mage-os/module-payment-graph-ql
   - mage-os/module-paypal-graph-ql
   - mage-os/module-quote-graph-ql
+  - mage-os/module-re-captcha-webapi-graph-ql
   - mage-os/module-related-product-graph-ql
   - mage-os/module-review-graph-ql
   - mage-os/module-sales-graph-ql

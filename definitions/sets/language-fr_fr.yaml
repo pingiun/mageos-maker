@@ -1,0 +1,6 @@
+name: language-fr_fr
+label: French (France)
+category: language
+description: Stock Mage-OS translation pack for French (France)
+packages:
+  - mage-os/language-fr_fr

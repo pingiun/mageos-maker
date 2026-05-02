@@ -80,6 +80,23 @@
             </div>
         </div>
 
+        @if (count($languageDefs) > 0)
+            <div class="panel">
+                <h2>Languages</h2>
+                <p style="font-size:12px;color:#666;margin:0 0 8px;">Stock Mage-OS translation packs. Disabled languages are added to <code>replace</code>.</p>
+                <div class="checkbox-list">
+                    @foreach ($languageDefs as $name => $lang)
+                        <label>
+                            <input type="checkbox" wire:model.live="enabledSets" value="{{ $name }}">
+                            <span>
+                                <strong>{{ $lang['label'] }}</strong>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         <div class="panel">
             <h2>Layers</h2>
             <p style="font-size:12px;color:#666;margin:0 0 8px;">Cross-cutting concerns. Stock layers are on by default; non-stock layers are managed by your profile-group choices.</p>

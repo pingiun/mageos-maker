@@ -1,0 +1,6 @@
+name: language-es_es
+label: Spanish (Spain)
+category: language
+description: Stock Mage-OS translation pack for Spanish (Spain)
+packages:
+  - mage-os/language-es_es

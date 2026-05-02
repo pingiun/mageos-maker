@@ -365,8 +365,15 @@ class Configurator extends Component
         // can re-paint, re-highlight, and flash the diff client-side.
         $this->dispatch('composer-updated', json: $this->composerJson);
 
+        // Partition sets by category so the view can render Modules and
+        // Languages in separate panels. The underlying disable-by-replace
+        // mechanism is unchanged — they're all just sets.
+        $modules = array_filter($defs->sets, fn ($s) => ($s['category'] ?? 'module') === 'module');
+        $languages = array_filter($defs->sets, fn ($s) => ($s['category'] ?? 'module') === 'language');
+
         return view('livewire.configurator', [
-            'setDefs' => $defs->sets,
+            'setDefs' => $modules,
+            'languageDefs' => $languages,
             'layerDefs' => $defs->layers,
             'addonDefs' => $defs->addons,
             'profileDefs' => $defs->profiles,
