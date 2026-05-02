@@ -69,6 +69,7 @@
             <h2>Modules</h2>
             <div class="checkbox-list">
                 @foreach ($setDefs as $name => $set)
+                    @php $parentEnabled = in_array($name, $enabledSets, true); @endphp
                     <label>
                         <input type="checkbox" wire:model.live="enabledSets" value="{{ $name }}">
                         <span>
@@ -76,6 +77,24 @@
                             <span class="desc">{{ $set['description'] ?? '' }}</span>
                         </span>
                     </label>
+                    @if (! empty($set['subtoggles']))
+                        <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                            @foreach ($set['subtoggles'] as $sub)
+                                <label class="{{ $parentEnabled ? '' : 'forced' }}" style="display:block;">
+                                    <input type="checkbox"
+                                        wire:model.live="enabledSubtoggles"
+                                        value="{{ $name }}.{{ $sub['name'] }}"
+                                        @disabled(! $parentEnabled)>
+                                    <span>
+                                        {{ $sub['label'] }}
+                                        @if (! empty($sub['description']))
+                                            <span class="desc">{{ $sub['description'] }}</span>
+                                        @endif
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
+                    @endif
                 @endforeach
             </div>
         </div>

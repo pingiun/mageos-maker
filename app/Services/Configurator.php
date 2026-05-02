@@ -64,6 +64,23 @@ class Configurator
             foreach ($this->defs->setPackages($set) as $pkg) {
                 $replace[$pkg] = '*';
             }
+            // Parent disabled → subtoggle packages also go to replace.
+            foreach ($this->defs->setSubtoggles($set) as $sub) {
+                foreach ($sub['packages'] ?? [] as $pkg) {
+                    $replace[$pkg] = '*';
+                }
+            }
+        }
+        // Subtoggles whose parent is still enabled: only their own packages go to replace.
+        $disabledSetMap = array_flip($disabledSets);
+        foreach ($selection->disabledSubtoggles as $key) {
+            [$setName, $subName] = array_pad(explode('.', $key, 2), 2, '');
+            if ($subName === '' || isset($disabledSetMap[$setName])) {
+                continue;
+            }
+            foreach ($this->defs->subtogglePackages($setName, $subName) as $pkg) {
+                $replace[$pkg] = '*';
+            }
         }
         foreach ($disabledLayers as $layer) {
             if (! $this->defs->isLayerStock($layer)) {

@@ -164,8 +164,25 @@ class InstallTreeResolver
     private function disabledPackageMap(Selection $sel): array
     {
         $out = [];
+        $disabledSetMap = [];
         foreach ($sel->disabledSets as $set) {
+            $disabledSetMap[$set] = true;
             foreach ($this->defs->setPackages($set) as $pkg) {
+                $out[$pkg] = true;
+            }
+            // Parent set disabled → its subtoggles' packages are also out.
+            foreach ($this->defs->setSubtoggles($set) as $sub) {
+                foreach ($sub['packages'] ?? [] as $pkg) {
+                    $out[$pkg] = true;
+                }
+            }
+        }
+        foreach ($sel->disabledSubtoggles as $key) {
+            [$setName, $subName] = array_pad(explode('.', $key, 2), 2, '');
+            if ($subName === '' || isset($disabledSetMap[$setName])) {
+                continue;
+            }
+            foreach ($this->defs->subtogglePackages($setName, $subName) as $pkg) {
                 $out[$pkg] = true;
             }
         }

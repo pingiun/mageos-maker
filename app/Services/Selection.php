@@ -12,6 +12,9 @@ namespace App\Services;
  *  - Profile-group options can pull add-ons in automatically (and may also
  *    disable sets/layers); those forced add-ons are computed at build time
  *    and aren't stored in `enabledAddons`.
+ *  - Subtoggles are finer-grained switches inside a set (e.g. 2FA's Duo
+ *    provider). Tracked positively as `disabledSubtoggles` (default empty).
+ *    Only meaningful when the parent set is enabled.
  */
 class Selection
 {
@@ -23,6 +26,8 @@ class Selection
         public readonly array $enabledLayers,
         public readonly array $enabledAddons,
         public readonly array $profileGroups,
+        /** @var list<string> "<setName>.<subName>" keys */
+        public readonly array $disabledSubtoggles = [],
     ) {}
 
     public static function default(string $version, Definitions $defs): self
@@ -43,6 +48,7 @@ class Selection
             enabledLayers: [],
             enabledAddons: [],
             profileGroups: $profileGroups,
+            disabledSubtoggles: [],
         );
 
         if ($self->profile !== null && isset($defs->profiles[$self->profile])) {
@@ -62,6 +68,7 @@ class Selection
             enabledLayers: array_values($data['enabledLayers'] ?? []),
             enabledAddons: array_values($data['enabledAddons'] ?? []),
             profileGroups: $data['profileGroups'] ?? [],
+            disabledSubtoggles: array_values($data['disabledSubtoggles'] ?? []),
         );
     }
 
@@ -75,6 +82,7 @@ class Selection
             'enabledLayers' => $this->enabledLayers,
             'enabledAddons' => $this->enabledAddons,
             'profileGroups' => $this->profileGroups,
+            'disabledSubtoggles' => $this->disabledSubtoggles,
         ];
     }
 
@@ -89,6 +97,7 @@ class Selection
             enabledLayers: array_values(array_unique(array_merge($this->enabledLayers, $sel['enabledLayers'] ?? []))),
             enabledAddons: array_values(array_unique(array_merge($this->enabledAddons, $sel['enabledAddons'] ?? []))),
             profileGroups: array_merge($this->profileGroups, $sel['profileGroups'] ?? []),
+            disabledSubtoggles: array_values(array_unique(array_merge($this->disabledSubtoggles, $sel['disabledSubtoggles'] ?? []))),
         );
     }
 }

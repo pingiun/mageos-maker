@@ -40,6 +40,9 @@ class Configurator extends Component
     /** @var array<string,string> Profile-group choices: ['theme' => 'luma', 'checkout' => 'default', ...] */
     public array $profileGroups = [];
 
+    /** @var list<string> Subtoggle keys ("setName.subName") currently enabled. Universe minus this = disabled. */
+    public array $enabledSubtoggles = [];
+
     public ?string $savedId = null;
 
     public ?string $savedAt = null;
@@ -259,6 +262,8 @@ class Configurator extends Component
             fn ($n) => $defs->isLayerStock($n),
         ));
 
+        $allSubtoggles = $defs->allSubtoggleKeys();
+
         return new Selection(
             version: $this->version ?? '',
             profile: $this->profile,
@@ -267,6 +272,7 @@ class Configurator extends Component
             enabledLayers: [],
             enabledAddons: $this->enabledAddons,
             profileGroups: $this->profileGroups,
+            disabledSubtoggles: array_values(array_diff($allSubtoggles, $this->enabledSubtoggles)),
         );
     }
 
@@ -350,6 +356,7 @@ class Configurator extends Component
         $this->enabledSets = array_values(array_diff($allSets, $sel->disabledSets));
         $this->enabledStockLayers = array_values(array_diff($stockLayers, $sel->disabledLayers));
         $this->profileGroups = $sel->profileGroups;
+        $this->enabledSubtoggles = array_values(array_diff($defs->allSubtoggleKeys(), $sel->disabledSubtoggles));
         // Apply soft defaults on top of the selection's explicit enabledAddons.
         $defaulted = $configurator->defaultedAddons($sel);
         $this->enabledAddons = array_values(array_unique(array_merge($sel->enabledAddons, $defaulted)));

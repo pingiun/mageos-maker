@@ -27,6 +27,39 @@ class Definitions
         return $this->sets[$name]['packages'] ?? [];
     }
 
+    /**
+     * Subtoggles defined under a set: a list of finer-grained on/off switches
+     * that only matter when the parent set is enabled. Each subtoggle has the
+     * shape `{name, label, description?, packages: list<string>}`.
+     *
+     * @return array<string,array{name:string,label:string,description?:string,packages:list<string>}>
+     */
+    public function setSubtoggles(string $name): array
+    {
+        $out = [];
+        foreach ($this->sets[$name]['subtoggles'] ?? [] as $sub) {
+            $out[$sub['name']] = $sub;
+        }
+        return $out;
+    }
+
+    public function subtogglePackages(string $set, string $sub): array
+    {
+        return $this->setSubtoggles($set)[$sub]['packages'] ?? [];
+    }
+
+    /** All "set.sub" keys across every defined set, used for default/complement computations. */
+    public function allSubtoggleKeys(): array
+    {
+        $keys = [];
+        foreach ($this->sets as $setName => $_def) {
+            foreach (array_keys($this->setSubtoggles($setName)) as $subName) {
+                $keys[] = "$setName.$subName";
+            }
+        }
+        return $keys;
+    }
+
     public function layerPackages(string $name): array
     {
         return $this->layers[$name]['packages'] ?? [];
