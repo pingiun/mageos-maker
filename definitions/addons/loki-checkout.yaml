@@ -1,0 +1,8 @@
+name: loki-checkout
+label: Loki Checkout
+description: Loki Checkout for Hyvä (commercial)
+packages:
+  - loki-checkout/magento2-hyva
+repositories:
+  - type: composer
+    url: https://composer.yireo.com/

@@ -10,3 +10,7 @@ options:
     label: Hyvä Checkout
     enables:
       addons: [hyva-checkout]
+  - name: loki-checkout
+    label: Loki Checkout
+    enables:
+      addons: [loki-checkout]
