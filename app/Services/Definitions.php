@@ -8,7 +8,7 @@ namespace App\Services;
 class Definitions
 {
     /**
-     * @param  array<string, array{name:string, label:string, description?:string, packages:list<string>}>  $sets    Stock module groups; only meaningful when DISABLED (added to `replace`).
+     * @param  array<string, array{name:string, label:string, description?:string, packages:list<string>}>  $sets  Stock module groups; only meaningful when DISABLED (added to `replace`).
      * @param  array<string, array{name:string, label:string, description?:string, stock?:bool, packages:list<string>, repositories?:list<array<string,mixed>>}>  $layers  Stock cross-cutting concerns; only meaningful when DISABLED. Non-stock layers may declare extra composer repositories.
      * @param  array<string, array{name:string, label:string, description?:string, packages:list<string>, repositories?:list<array<string,mixed>>}>  $addons  Extra packages NOT in stock Mage-OS; only meaningful when ENABLED (added to `require`). May declare extra composer repositories.
      * @param  array<string, array{name:string, label:string, description?:string, options:list<array<string,mixed>>}>  $profileGroups
@@ -24,7 +24,19 @@ class Definitions
 
     public function setPackages(string $name): array
     {
-        return $this->sets[$name]['packages'] ?? [];
+        return self::entryNames($this->sets[$name]['packages'] ?? []);
+    }
+
+    /**
+     * Normalised package entries for a set. Each entry is `{name: string,
+     * requires?: array}` where `requires` (when present) gates whether the
+     * package actually contributes — see {@see normalizePackages()}.
+     *
+     * @return list<array{name:string,requires?:array<string,string>}>
+     */
+    public function setPackageEntries(string $name): array
+    {
+        return self::normalizePackages($this->sets[$name]['packages'] ?? []);
     }
 
     /**
@@ -40,12 +52,19 @@ class Definitions
         foreach ($this->sets[$name]['subtoggles'] ?? [] as $sub) {
             $out[$sub['name']] = $sub;
         }
+
         return $out;
     }
 
     public function subtogglePackages(string $set, string $sub): array
     {
-        return $this->setSubtoggles($set)[$sub]['packages'] ?? [];
+        return self::entryNames($this->setSubtoggles($set)[$sub]['packages'] ?? []);
+    }
+
+    /** @return list<array{name:string,requires?:array<string,string>}> */
+    public function subtogglePackageEntries(string $set, string $sub): array
+    {
+        return self::normalizePackages($this->setSubtoggles($set)[$sub]['packages'] ?? []);
     }
 
     /** All "set.sub" keys across every defined set, used for default/complement computations. */
@@ -57,17 +76,79 @@ class Definitions
                 $keys[] = "$setName.$subName";
             }
         }
+
         return $keys;
     }
 
     public function layerPackages(string $name): array
     {
-        return $this->layers[$name]['packages'] ?? [];
+        return self::entryNames($this->layers[$name]['packages'] ?? []);
+    }
+
+    /** @return list<array{name:string,requires?:array<string,string>}> */
+    public function layerPackageEntries(string $name): array
+    {
+        return self::normalizePackages($this->layers[$name]['packages'] ?? []);
     }
 
     public function addonPackages(string $name): array
     {
-        return $this->addons[$name]['packages'] ?? [];
+        return self::entryNames($this->addons[$name]['packages'] ?? []);
+    }
+
+    /** @return list<array{name:string,requires?:array<string,string>}> */
+    public function addonPackageEntries(string $name): array
+    {
+        return self::normalizePackages($this->addons[$name]['packages'] ?? []);
+    }
+
+    /**
+     * A YAML `packages:` entry can be either a string (always-included) or a
+     * map `{name: 'pkg/name', requires: {...}}`. The `requires` block is the
+     * per-package gate evaluated by {@see Configurator}; today it supports:
+     *   - addon:   <name>          → only contribute if the addon is enabled
+     *   - layer:   <name>          → only contribute if that layer is enabled
+     *   - set:     <name>          → only contribute if the set is enabled
+     *                                 (i.e. NOT in disabledSets)
+     *   - package: vendor/name     → only contribute if the package is in
+     *                                 the running require map (i.e. its base
+     *                                 module hasn't been replaced away)
+     *
+     * Entries without `requires` always contribute, preserving the legacy
+     * "list of strings" behaviour.
+     *
+     * @param  list<string|array<string,mixed>>  $entries
+     * @return list<array{name:string,requires?:array<string,string>}>
+     */
+    public static function normalizePackages(array $entries): array
+    {
+        $out = [];
+        foreach ($entries as $e) {
+            if (is_string($e)) {
+                $out[] = ['name' => $e];
+
+                continue;
+            }
+            if (! is_array($e) || ! isset($e['name']) || ! is_string($e['name'])) {
+                continue;
+            }
+            $entry = ['name' => $e['name']];
+            if (isset($e['requires']) && is_array($e['requires'])) {
+                $entry['requires'] = $e['requires'];
+            }
+            $out[] = $entry;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<string|array<string,mixed>>  $entries
+     * @return list<string>
+     */
+    private static function entryNames(array $entries): array
+    {
+        return array_map(fn ($e) => $e['name'], self::normalizePackages($entries));
     }
 
     /**
@@ -113,6 +194,7 @@ class Definitions
                 return $opt;
             }
         }
+
         return null;
     }
 
@@ -135,6 +217,7 @@ class Definitions
                 return false;
             }
         }
+
         return true;
     }
 
@@ -169,6 +252,7 @@ class Definitions
                 return null;
             }
         }
+
         return ['use' => $pref['use']] + (isset($pref['reason']) ? ['reason' => $pref['reason']] : []);
     }
 
@@ -185,6 +269,7 @@ class Definitions
         foreach ($opt['subtoggles'] ?? [] as $sub) {
             $out[$sub['name']] = $sub;
         }
+
         return $out;
     }
 
@@ -207,6 +292,7 @@ class Definitions
         foreach ($opt['variants'] ?? [] as $v) {
             $out[$v['name']] = $v;
         }
+
         return $out;
     }
 
@@ -237,6 +323,7 @@ class Definitions
                     return false;
                 }
             }
+
             return true;
         };
 
@@ -254,6 +341,7 @@ class Definitions
                 return $name;
             }
         }
+
         return null;
     }
 
@@ -273,6 +361,7 @@ class Definitions
                 }
             }
         }
+
         return $keys;
     }
 
@@ -304,6 +393,7 @@ class Definitions
                 }
             }
         }
+
         return $keys;
     }
 
@@ -314,6 +404,7 @@ class Definitions
                 return $opt['name'];
             }
         }
+
         return null;
     }
 
@@ -324,6 +415,7 @@ class Definitions
                 return $name;
             }
         }
+
         return array_key_first($this->profiles);
     }
 }

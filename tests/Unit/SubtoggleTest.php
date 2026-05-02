@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
+use App\Services\ComposerRepoIndex;
 use App\Services\Configurator;
 use App\Services\Definitions;
 use App\Services\InstallTreeResolver;
@@ -52,7 +54,7 @@ class SubtoggleTest extends TestCase
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
 
-        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new AddonVersionResolver($defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mageos-catalog'), 'https://example.com/');
         $sel = new Selection('1.0.0', null, [], [], [], [], [], ['two-factor-auth.duo']);
 
         $composer = $cfg->build($sel);
@@ -67,7 +69,7 @@ class SubtoggleTest extends TestCase
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
 
-        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new AddonVersionResolver($defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mageos-catalog'), 'https://example.com/');
         // Parent disabled; subtoggle list has no entries — but parent disable cascades.
         $sel = new Selection('1.0.0', null, ['two-factor-auth'], [], [], [], [], []);
 

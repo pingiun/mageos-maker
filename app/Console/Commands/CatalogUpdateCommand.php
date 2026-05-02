@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
+use App\Services\ComposerRepoIndex;
 use App\Services\GraphBaker;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
@@ -16,11 +17,19 @@ class CatalogUpdateCommand extends Command
 
     protected $description = 'Refresh the cached Mage-OS Composer manifest and pre-bake install-tree graphs';
 
-    public function handle(CatalogRepository $catalog, GraphBaker $baker, AddonVersionResolver $addonVersions): int
+    public function handle(CatalogRepository $catalog, GraphBaker $baker, AddonVersionResolver $addonVersions, ComposerRepoIndex $repoIndex): int
     {
         if (! $this->option('bake-only')) {
             $changed = $catalog->refresh();
             $this->info($changed ? 'Catalog updated.' : 'Catalog already up to date (304).');
+
+            // Refresh the eager composer-repo aggregator first; the addon
+            // version resolver and the graph baker both read from it.
+            $indexResult = $repoIndex->refresh();
+            $this->line("Indexed {$indexResult['packageCount']} package(s) from configured composer repos.");
+            foreach ($indexResult['warnings'] as $w) {
+                $this->warn("  warn: $w");
+            }
 
             $result = $addonVersions->refresh();
             $count = count($result['versions']);

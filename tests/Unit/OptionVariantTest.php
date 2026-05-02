@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
+use App\Services\ComposerRepoIndex;
 use App\Services\Configurator;
 use App\Services\Definitions;
 use App\Services\Selection;
@@ -59,7 +61,7 @@ class OptionVariantTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new AddonVersionResolver($defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mageos-catalog'), 'https://example.com/');
 
         $sel = new Selection('1.0.0', null, [], [], [], [],
             ['theme' => 'hyva', 'checkout' => 'loki'], [], []);
@@ -73,7 +75,7 @@ class OptionVariantTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new AddonVersionResolver($defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mageos-catalog'), 'https://example.com/');
 
         $sel = new Selection('1.0.0', null, [], [], [], [],
             ['theme' => 'luma', 'checkout' => 'loki'], [],

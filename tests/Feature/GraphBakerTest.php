@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\CatalogRepository;
+use App\Services\ComposerRepoIndex;
 use App\Services\Definitions;
 use App\Services\GraphBaker;
 use App\Services\InstallTreeResolver;
@@ -56,7 +57,7 @@ class GraphBakerTest extends TestCase
             sets: ['wishlist' => ['name' => 'wishlist', 'label' => 'W', 'packages' => ['mage-os/module-wishlist']]],
             layers: [], addons: [], profileGroups: [], profiles: [],
         );
-        $baker = new GraphBaker($catalog, $defs, 'mage-os/project-community-edition', $this->graphsDir, $this->packagistDir);
+        $baker = new GraphBaker($catalog, $defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mage-os/project-community-edition', $this->graphsDir, $this->packagistDir);
 
         $result = $baker->bake('2.2.2');
         $this->assertTrue($result['baseWritten']);
@@ -101,7 +102,7 @@ class GraphBakerTest extends TestCase
 
         $catalog = $this->app->make(CatalogRepository::class);
         $defs = new Definitions([], [], [], [], []);
-        $baker = new GraphBaker($catalog, $defs, 'mage-os/project-community-edition', $this->graphsDir, $this->packagistDir);
+        $baker = new GraphBaker($catalog, $defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mage-os/project-community-edition', $this->graphsDir, $this->packagistDir);
 
         $first = $baker->bake('2.2.2');
         $this->assertTrue($first['baseWritten']);

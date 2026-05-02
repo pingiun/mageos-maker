@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
+use App\Services\ComposerRepoIndex;
 use App\Services\Configurator;
 use App\Services\DefinitionLoader;
 use App\Services\Definitions;
@@ -34,11 +35,54 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(Definitions::class, fn ($app) => $app->make(DefinitionLoader::class)->load());
 
+        $this->app->singleton(ComposerRepoIndex::class, function ($app) {
+            $config = $app['config']->get('mageos');
+            $defs = $app->make(Definitions::class);
+            $repos = [];
+            $seen = [];
+
+            // Hyvä's private packagist needs HTTP basic auth (token + license key).
+            // Synthesised from env, since the YAML can't carry secrets.
+            $hyvaProject = $config['hyva_project'] ?? null;
+            $hyvaKey = $config['hyva_license_key'] ?? null;
+            if ($hyvaProject && $hyvaKey) {
+                $url = "https://hyva-themes.repo.packagist.com/{$hyvaProject}";
+                $repos[] = ['url' => $url, 'basicAuth' => ['token', $hyvaKey]];
+                $seen[$url] = true;
+            }
+
+            $collect = function (array $declared) use (&$repos, &$seen) {
+                foreach ($declared as $repo) {
+                    if (($repo['type'] ?? null) !== 'composer' || empty($repo['url'])) {
+                        continue;
+                    }
+                    $url = rtrim((string) $repo['url'], '/');
+                    // Packagist itself is lazy-provider; the eager fetcher would
+                    // 404 on packages.json. Per-package p2 lookup handles it.
+                    if (str_contains($url, 'repo.packagist.org')) {
+                        continue;
+                    }
+                    if (isset($seen[$url])) {
+                        continue;
+                    }
+                    $repos[] = ['url' => $url];
+                    $seen[$url] = true;
+                }
+            };
+            foreach ($defs->addons as $a) {
+                $collect($a['repositories'] ?? []);
+            }
+            foreach ($defs->layers as $l) {
+                $collect($l['repositories'] ?? []);
+            }
+
+            return new ComposerRepoIndex($repos, $config['cache_dir']);
+        });
+
         $this->app->singleton(AddonVersionResolver::class, fn ($app) => new AddonVersionResolver(
             $app->make(Definitions::class),
+            $app->make(ComposerRepoIndex::class),
             $app['config']->get('mageos.cache_dir'),
-            $app['config']->get('mageos.hyva_project'),
-            $app['config']->get('mageos.hyva_license_key'),
         ));
 
         $this->app->singleton(Configurator::class, fn ($app) => new Configurator(
@@ -56,6 +100,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(GraphBaker::class, fn ($app) => new GraphBaker(
             $app->make(CatalogRepository::class),
             $app->make(Definitions::class),
+            $app->make(ComposerRepoIndex::class),
             $app['config']->get('mageos.edition_package'),
             $app['config']->get('mageos.graphs_dir', 'graphs'),
             $app['config']->get('mageos.packagist_cache_dir', 'packagist-cache'),

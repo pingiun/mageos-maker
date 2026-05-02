@@ -28,6 +28,7 @@ class GraphBaker
     public function __construct(
         private readonly CatalogRepository $catalog,
         private readonly Definitions $defs,
+        private readonly ComposerRepoIndex $repoIndex,
         private readonly string $editionPackage,
         private readonly string $graphsDir = 'graphs',
         private readonly string $packagistCacheDir = 'packagist-cache',
@@ -87,7 +88,7 @@ class GraphBaker
                     continue;
                 }
 
-                $delta = $this->bakeDelta($version, $groupName, $opt['name'], $extraPackages, $packages, $warnings);
+                $delta = $this->bakeDelta($version, ['group' => $groupName, 'option' => $opt['name']], $extraPackages, $packages, $warnings);
                 $deltaPath = "$this->graphsDir/$version/options/$groupName/{$opt['name']}.json";
                 $deltaChanged = $force || ! $disk->exists($deltaPath)
                     || $disk->get($deltaPath) !== json_encode($delta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
@@ -98,15 +99,56 @@ class GraphBaker
             }
         }
 
+        // Bake per-addon deltas so the install-tree resolver can show packages
+        // contributed by add-ons toggled directly in the Add-ons panel — those
+        // aren't tied to any profile-group option.
+        foreach (array_keys($this->defs->addons) as $addonName) {
+            $extraPackages = $this->defs->addonPackages($addonName);
+            if ($extraPackages === []) {
+                continue;
+            }
+            $delta = $this->bakeDelta($version, ['kind' => 'addon', 'name' => $addonName], $extraPackages, $packages, $warnings);
+            $deltaPath = "$this->graphsDir/$version/addons/$addonName.json";
+            $deltaChanged = $force || ! $disk->exists($deltaPath)
+                || $disk->get($deltaPath) !== json_encode($delta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if ($deltaChanged) {
+                $this->atomicWrite($deltaPath, $delta);
+                $deltasWritten[] = "addons/$addonName";
+            }
+        }
+
+        // Same idea for non-stock layers toggled directly.
+        foreach ($this->defs->layers as $layerName => $layerDef) {
+            if (($layerDef['stock'] ?? true) !== false) {
+                continue;
+            }
+            $extraPackages = $this->defs->layerPackages($layerName);
+            if ($extraPackages === []) {
+                continue;
+            }
+            $delta = $this->bakeDelta($version, ['kind' => 'layer', 'name' => $layerName], $extraPackages, $packages, $warnings);
+            $deltaPath = "$this->graphsDir/$version/layers/$layerName.json";
+            $deltaChanged = $force || ! $disk->exists($deltaPath)
+                || $disk->get($deltaPath) !== json_encode($delta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if ($deltaChanged) {
+                $this->atomicWrite($deltaPath, $delta);
+                $deltasWritten[] = "layers/$layerName";
+            }
+        }
+
         InstallTreeResolver::clearCache();
+
         return ['baseWritten' => $baseChanged, 'deltasWritten' => $deltasWritten, 'warnings' => $warnings];
     }
 
     /**
+     * @param  array<string,string>  $appliesTo  arbitrary marker for which selection knob this delta applies to
+     *                                          — e.g. {group, option} for profile-group options,
+     *                                          {kind: 'addon'|'layer', name} for direct toggles.
      * @param  list<string>  $extraPackages
      * @param  array<string,array{version:string,type:string,requires:array<string,string>,replaces:array<string,string>}>  $basePackages
      */
-    private function bakeDelta(string $version, string $group, string $option, array $extraPackages, array $basePackages, array &$warnings): array
+    private function bakeDelta(string $version, array $appliesTo, array $extraPackages, array $basePackages, array &$warnings): array
     {
         $addPackages = [];
         $addRequires = $extraPackages;
@@ -126,7 +168,7 @@ class GraphBaker
 
         return [
             'version' => $version,
-            'appliesTo' => ['group' => $group, 'option' => $option],
+            'appliesTo' => $appliesTo,
             'addRequires' => array_values($addRequires),
             'addPackages' => $this->serializePackages($deltaPackages),
         ];
@@ -167,6 +209,7 @@ class GraphBaker
                 $names[] = $pkg;
             }
         }
+
         return array_values(array_unique($names));
     }
 
@@ -186,6 +229,7 @@ class GraphBaker
         $def = $this->resolve($name, $constraint, $warnings);
         if ($def === null) {
             $warnings[] = "missing package metadata: $name (constraint: $constraint)";
+
             return;
         }
         $out[$name] = [
@@ -214,7 +258,7 @@ class GraphBaker
         }
         $candidates = array_keys($versions);
 
-        $parser = new VersionParser();
+        $parser = new VersionParser;
         $satisfying = [];
         foreach ($candidates as $v) {
             try {
@@ -237,6 +281,7 @@ class GraphBaker
         // The above lexical compare on normalized form is wrong for proper semver — use Semver::sort
         $pool = Semver::rsort($pool);
         $chosen = $pool[0];
+
         return $versions[$chosen];
     }
 
@@ -247,6 +292,14 @@ class GraphBaker
         if ($fromCatalog !== []) {
             return $fromCatalog;
         }
+        // Eager composer-repo aggregator (Hyvä private repo, addon-declared
+        // composer repos). Populated by mageos:catalog:update — without that
+        // refresh, the index is empty and we drop straight to packagist.
+        $fromIndex = $this->repoIndex->packageVersions($name);
+        if ($fromIndex !== []) {
+            return $fromIndex;
+        }
+
         return $this->fetchPackagist($name);
     }
 
@@ -285,6 +338,7 @@ class GraphBaker
             }
             $byVersion[$v] = $entry;
         }
+
         return $this->p2Cache[$name] = $byVersion;
     }
 
@@ -307,6 +361,7 @@ class GraphBaker
             }
             $out[$name] = $constraint;
         }
+
         return $out;
     }
 
@@ -325,6 +380,7 @@ class GraphBaker
                 'replaces' => array_values(array_keys($pkg['replaces'] ?? [])),
             ];
         }
+
         return $out;
     }
 

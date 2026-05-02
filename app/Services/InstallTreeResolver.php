@@ -64,24 +64,25 @@ class InstallTreeResolver
         $rootRequires = $base['rootRequires'];
         $packages = $base['packages'];
 
-        // Apply add-on (additive) requires from non-default profile-group options
-        // and from explicitly-enabled add-ons.
+        // Apply add-on (additive) requires from non-default profile-group options.
         foreach ($sel->profileGroups as $group => $option) {
             $defaultOption = $this->defs->defaultProfileGroupOption($group);
             if ($defaultOption === $option) {
                 continue;
             }
             $delta = $this->loadDelta($base['version'], $group, $option);
-            if ($delta === null) {
+            $this->applyDelta($delta, $rootRequires, $packages);
+        }
+        // Plus directly-toggled addons from the Add-ons panel.
+        foreach ($sel->enabledAddons as $addon) {
+            $this->applyDelta($this->loadAddonDelta($base['version'], $addon), $rootRequires, $packages);
+        }
+        // Plus directly-toggled non-stock layers.
+        foreach ($sel->enabledLayers as $layer) {
+            if ($this->defs->isLayerStock($layer)) {
                 continue;
             }
-            foreach ($delta['addRequires'] ?? [] as $req) {
-                if (! in_array($req, $rootRequires, true)) {
-                    $rootRequires[] = $req;
-                }
-            }
-            // Delta wins on package conflict.
-            $packages = ($delta['addPackages'] ?? []) + $packages;
+            $this->applyDelta($this->loadLayerDelta($base['version'], $layer), $rootRequires, $packages);
         }
 
         $disabled = $this->disabledPackageMap($sel);
@@ -258,6 +259,37 @@ class InstallTreeResolver
     public function loadDelta(string $version, string $group, string $option): ?array
     {
         return $this->loadCached("$version/options/$group/$option.json");
+    }
+
+    public function loadAddonDelta(string $version, string $addon): ?array
+    {
+        return $this->loadCached("$version/addons/$addon.json");
+    }
+
+    public function loadLayerDelta(string $version, string $layer): ?array
+    {
+        return $this->loadCached("$version/layers/$layer.json");
+    }
+
+    /**
+     * Merge a delta into the running rootRequires + packages map. Left wins
+     * on package conflict (earlier-applied delta keeps its version).
+     *
+     * @param  array{addRequires?:list<string>,addPackages?:array<string,array<string,mixed>>}|null  $delta
+     * @param  list<string>  $rootRequires
+     * @param  array<string,array<string,mixed>>  $packages
+     */
+    private function applyDelta(?array $delta, array &$rootRequires, array &$packages): void
+    {
+        if ($delta === null) {
+            return;
+        }
+        foreach ($delta['addRequires'] ?? [] as $req) {
+            if (! in_array($req, $rootRequires, true)) {
+                $rootRequires[] = $req;
+            }
+        }
+        $packages = ($delta['addPackages'] ?? []) + $packages;
     }
 
     private function loadCached(string $relativePath): ?array

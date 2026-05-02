@@ -3,5 +3,14 @@ label: Hyvä Compatibility Modules
 description: Bridge modules connecting Hyvä to common Magento extensions
 # Not part of stock Mage-OS — enable adds these packages to `require`.
 stock: false
-packages:
-  - hyva-themes/magento2-compat-module-fallback
+# Each compat package bridges Hyvä to one specific 3rd-party Magento extension
+# and is only useful when that extension is itself enabled. Use the per-package
+# `requires.addon` gate (see Definitions::normalizePackages) so the bridge only
+# lands when its target add-on is in the selection. Currently empty — no
+# matching add-ons are defined yet — but the schema below is the template:
+#
+# packages:
+#   - name: hyva-themes/magento2-amasty-shopby-compat
+#     requires:
+#       addon: amasty-shopby
+packages: []

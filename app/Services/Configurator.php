@@ -44,11 +44,26 @@ class Configurator
             ];
         }
 
+        // Gate context — `requires:` blocks on individual package entries are
+        // checked against this. Built once up front; the `package` gate reads
+        // the running `require` map directly so order matters: gates that
+        // depend on a package only fire after that package has been added.
+        $ctx = [
+            'addons' => array_flip($effectiveAddons),
+            'layers' => array_flip($effectiveEnabledLayers),
+            'disabledSets' => array_flip($disabledSets),
+            'disabledLayers' => array_flip($disabledLayers),
+        ];
+
         // Add-ons: append to require, pinning to the latest known version
         // (resolved offline by mageos:catalog:update). Falls back to "*" when
         // a package wasn't in the cached version map.
         foreach ($effectiveAddons as $addon) {
-            foreach ($this->defs->addonPackages($addon) as $pkg) {
+            foreach ($this->defs->addonPackageEntries($addon) as $entry) {
+                if (! $this->packageAllowed($entry, $ctx, $composer['require'])) {
+                    continue;
+                }
+                $pkg = $entry['name'];
                 $composer['require'][$pkg] = $this->addonVersions->constraint($pkg) ?? '*';
             }
             $this->appendRepositories($composer, $this->defs->addonRepositories($addon));
@@ -58,7 +73,11 @@ class Configurator
             if ($this->defs->isLayerStock($layer)) {
                 continue;
             }
-            foreach ($this->defs->layerPackages($layer) as $pkg) {
+            foreach ($this->defs->layerPackageEntries($layer) as $entry) {
+                if (! $this->packageAllowed($entry, $ctx, $composer['require'])) {
+                    continue;
+                }
+                $pkg = $entry['name'];
                 $composer['require'][$pkg] = $this->addonVersions->constraint($pkg) ?? '*';
             }
             $this->appendRepositories($composer, $this->defs->layerRepositories($layer));
@@ -66,15 +85,25 @@ class Configurator
         ksort($composer['require']);
 
         // Disabled sets and disabled stock-layers: append to replace.
+        // Gating on `package:` for replace entries lets a stock layer (e.g.
+        // graphql) skip replacing a package whose root module has already
+        // been replaced away — so the replace map only mentions packages
+        // that would otherwise be installed.
         $replace = $composer['replace'] ?? [];
         foreach ($disabledSets as $set) {
-            foreach ($this->defs->setPackages($set) as $pkg) {
-                $replace[$pkg] = '*';
+            foreach ($this->defs->setPackageEntries($set) as $entry) {
+                if (! $this->packageAllowed($entry, $ctx, $composer['require'])) {
+                    continue;
+                }
+                $replace[$entry['name']] = '*';
             }
             // Parent disabled → subtoggle packages also go to replace.
             foreach ($this->defs->setSubtoggles($set) as $sub) {
-                foreach ($sub['packages'] ?? [] as $pkg) {
-                    $replace[$pkg] = '*';
+                foreach (Definitions::normalizePackages($sub['packages'] ?? []) as $entry) {
+                    if (! $this->packageAllowed($entry, $ctx, $composer['require'])) {
+                        continue;
+                    }
+                    $replace[$entry['name']] = '*';
                 }
             }
         }
@@ -85,16 +114,22 @@ class Configurator
             if ($subName === '' || isset($disabledSetMap[$setName])) {
                 continue;
             }
-            foreach ($this->defs->subtogglePackages($setName, $subName) as $pkg) {
-                $replace[$pkg] = '*';
+            foreach ($this->defs->subtogglePackageEntries($setName, $subName) as $entry) {
+                if (! $this->packageAllowed($entry, $ctx, $composer['require'])) {
+                    continue;
+                }
+                $replace[$entry['name']] = '*';
             }
         }
         foreach ($disabledLayers as $layer) {
             if (! $this->defs->isLayerStock($layer)) {
                 continue;
             }
-            foreach ($this->defs->layerPackages($layer) as $pkg) {
-                $replace[$pkg] = '*';
+            foreach ($this->defs->layerPackageEntries($layer) as $entry) {
+                if (! $this->packageAllowed($entry, $ctx, $composer['require'])) {
+                    continue;
+                }
+                $replace[$entry['name']] = '*';
             }
         }
         if ($replace !== []) {
@@ -160,6 +195,37 @@ class Configurator
      *
      * @param  list<array<string,mixed>>  $repos
      */
+    /**
+     * Evaluate a package entry's `requires:` gate against the build context.
+     * Schema and supported keys are documented on
+     * {@see Definitions::normalizePackages()}.
+     *
+     * @param  array{name:string,requires?:array<string,string>}  $entry
+     * @param  array{addons:array<string,int>,layers:array<string,int>,disabledSets:array<string,int>,disabledLayers:array<string,int>}  $ctx
+     * @param  array<string,string>  $require  running require map (for `requires.package` gates)
+     */
+    private function packageAllowed(array $entry, array $ctx, array $require): bool
+    {
+        $req = $entry['requires'] ?? null;
+        if (! is_array($req)) {
+            return true;
+        }
+        if (isset($req['addon']) && ! isset($ctx['addons'][$req['addon']])) {
+            return false;
+        }
+        if (isset($req['layer']) && ! isset($ctx['layers'][$req['layer']])) {
+            return false;
+        }
+        if (isset($req['set']) && isset($ctx['disabledSets'][$req['set']])) {
+            return false;
+        }
+        if (isset($req['package']) && ! isset($require[$req['package']])) {
+            return false;
+        }
+
+        return true;
+    }
+
     private function appendRepositories(array &$composer, array $repos): void
     {
         $composer['repositories'] ??= [];

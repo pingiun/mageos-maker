@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
+use App\Services\ComposerRepoIndex;
 use App\Services\Configurator;
 use App\Services\Definitions;
 use App\Services\Selection;
@@ -26,11 +28,11 @@ class OptionRequiresTest extends TestCase
                 'checkout' => ['name' => 'checkout', 'label' => 'Checkout', 'options' => [
                     ['name' => 'default', 'label' => 'Default', 'default' => true],
                     ['name' => 'loki-luma', 'label' => 'Loki Luma',
-                     'requires' => ['profileGroups' => ['theme' => 'luma']],
-                     'enables' => ['addons' => ['loki-luma']]],
+                        'requires' => ['profileGroups' => ['theme' => 'luma']],
+                        'enables' => ['addons' => ['loki-luma']]],
                     ['name' => 'loki-hyva', 'label' => 'Loki Hyva',
-                     'requires' => ['profileGroups' => ['theme' => 'hyva']],
-                     'enables' => ['addons' => ['loki-hyva']]],
+                        'requires' => ['profileGroups' => ['theme' => 'hyva']],
+                        'enables' => ['addons' => ['loki-hyva']]],
                 ]],
             ],
             profiles: [],
@@ -51,7 +53,7 @@ class OptionRequiresTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new AddonVersionResolver($defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mageos-catalog'), 'https://example.com/');
 
         $sel = new Selection('1.0.0', null, [], [], [], ['loki-hyva'],
             ['theme' => 'hyva', 'checkout' => 'loki-hyva'], [], []);
@@ -64,7 +66,7 @@ class OptionRequiresTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new AddonVersionResolver($defs, new ComposerRepoIndex([], 'mageos-catalog'), 'mageos-catalog'), 'https://example.com/');
 
         // theme=luma but checkout claims loki-hyva — invalid combo. Configurator
         // treats checkout as if it were the group's default (no addons).
