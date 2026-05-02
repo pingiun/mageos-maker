@@ -57,6 +57,13 @@
         .hyva-steps .step-label { display: block; color: #444; margin-bottom: 4px; font-weight: 500; }
         pre.cmd { background: #1e1e23; color: #e6e6e6; padding: 10px 12px; margin: 0; border-radius: 4px; font-size: 12px; line-height: 1.45; overflow-x: auto; white-space: pre; }
         pre.cmd code { font-family: ui-monospace, Menlo, monospace; }
+        .cmd-row { position: relative; }
+        .cmd-row pre.cmd { padding-right: 40px; }
+        .cmd-row .cmd-copy { position: absolute; top: 6px; right: 6px; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; background: rgba(255,255,255,0.08); color: #e6e6e6; border: 1px solid rgba(255,255,255,0.15); border-radius: 3px; font-size: 11px; cursor: pointer; }
+        .cmd-row .cmd-copy svg { width: 14px; height: 14px; fill: currentColor; }
+        .cmd-row .cmd-copy:hover { background: rgba(255,255,255,0.15); }
+        .cmd-row .cmd-copy:disabled { cursor: default; opacity: 0.85; }
+        .cmd-row .cmd-copy.copied { width: auto; padding: 0 8px; }
         .hyva-steps small { display: block; margin-top: 4px; color: #777; font-size: 11px; }
         .hyva-steps small code { background: #f0f0f4; padding: 1px 4px; border-radius: 3px; }
     </style>
@@ -154,6 +161,20 @@
     function copyComposer() {
         const el = document.getElementById('composer-out');
         if (el) navigator.clipboard.writeText(el.textContent);
+    }
+
+    // Used by per-step copy buttons in the Hyvä install panel: copies the
+    // <code> contents of the nearest preceding <pre> sibling and flashes a
+    // momentary "Copied" label so the user gets visual confirmation.
+    function copyCmd(btn) {
+        const pre = btn.closest('.cmd-row')?.querySelector('pre.cmd code');
+        if (!pre) return;
+        navigator.clipboard.writeText(pre.textContent);
+        const original = btn.innerHTML;
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        btn.disabled = true;
+        setTimeout(() => { btn.innerHTML = original; btn.classList.remove('copied'); btn.disabled = false; }, 1200);
     }
 
     // Initial highlight; subsequent updates come via the Livewire event.

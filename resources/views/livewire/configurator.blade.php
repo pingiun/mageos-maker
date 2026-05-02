@@ -279,6 +279,7 @@
             @php
                 $token = $hyvaToken !== '' ? $hyvaToken : 'YOUR_HYVA_TOKEN';
                 $project = $hyvaProject !== '' ? $hyvaProject : 'yourProjectName';
+                $copyIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" aria-hidden="true" focusable="false"><path d="M480 400L288 400C279.2 400 272 392.8 272 384L272 128C272 119.2 279.2 112 288 112L421.5 112C425.7 112 429.8 113.7 432.8 116.7L491.3 175.2C494.3 178.2 496 182.3 496 186.5L496 384C496 392.8 488.8 400 480 400zM288 448L480 448C515.3 448 544 419.3 544 384L544 186.5C544 169.5 537.3 153.2 525.3 141.2L466.7 82.7C454.7 70.7 438.5 64 421.5 64L288 64C252.7 64 224 92.7 224 128L224 384C224 419.3 252.7 448 288 448zM160 192C124.7 192 96 220.7 96 256L96 512C96 547.3 124.7 576 160 576L352 576C387.3 576 416 547.3 416 512L416 496L368 496L368 512C368 520.8 360.8 528 352 528L160 528C151.2 528 144 520.8 144 512L144 256C144 247.2 151.2 240 160 240L176 240L176 192L160 192z"/></svg>';
             @endphp
             <div class="panel hyva-panel">
                 <h2>Hyvä install steps</h2>
@@ -304,29 +305,29 @@
                 <ol class="hyva-steps">
                     <li>
                         <span class="step-label">Configure composer auth</span>
-                        <pre class="cmd"><code>composer config --auth http-basic.hyva-themes.repo.packagist.com token {{ $token }}</code></pre>
+                        <div class="cmd-row"><pre class="cmd"><code>composer config --auth http-basic.hyva-themes.repo.packagist.com token {{ $token }}</code></pre><button type="button" class="cmd-copy" onclick="copyCmd(this)" aria-label="Copy">{!! $copyIcon !!}</button></div>
                     </li>
                     @if ($hyvaProject === '')
                         <li>
                             <span class="step-label">Add the Hyvä private repository</span>
-                            <pre class="cmd"><code>composer config repositories.hyva-private composer https://hyva-themes.repo.packagist.com/{{ $project }}/</code></pre>
+                            <div class="cmd-row"><pre class="cmd"><code>composer config repositories.hyva-private composer https://hyva-themes.repo.packagist.com/{{ $project }}/</code></pre><button type="button" class="cmd-copy" onclick="copyCmd(this)" aria-label="Copy">{!! $copyIcon !!}</button></div>
                             <small>Skip this once you've filled in the project name above — the repo will be baked into the generated <code>composer.json</code>.</small>
                         </li>
                     @endif
                     <li>
                         <span class="step-label">Install dependencies</span>
-                        <pre class="cmd"><code>composer install</code></pre>
+                        <div class="cmd-row"><pre class="cmd"><code>composer install</code></pre><button type="button" class="cmd-copy" onclick="copyCmd(this)" aria-label="Copy">{!! $copyIcon !!}</button></div>
                     </li>
                     <li>
                         <span class="step-label">Activate the theme in Magento</span>
-                        <pre class="cmd"><code>bin/magento setup:upgrade
+                        <div class="cmd-row"><pre class="cmd"><code>bin/magento setup:upgrade
 bin/magento config:set design/theme/theme_id $(bin/magento dev:theme:list 2>/dev/null | grep Hyva/default | awk '{print $1}')
-bin/magento cache:flush</code></pre>
+bin/magento cache:flush</code></pre><button type="button" class="cmd-copy" onclick="copyCmd(this)" aria-label="Copy">{!! $copyIcon !!}</button></div>
                         <small>Or pick <code>Hyva/default</code> from <em>Content → Design → Configuration</em> in the admin.</small>
                     </li>
                     <li>
                         <span class="step-label">Disable the legacy Magento captcha</span>
-                        <pre class="cmd"><code>bin/magento config:set customer/captcha/enable 0</code></pre>
+                        <div class="cmd-row"><pre class="cmd"><code>bin/magento config:set customer/captcha/enable 0</code></pre><button type="button" class="cmd-copy" onclick="copyCmd(this)" aria-label="Copy">{!! $copyIcon !!}</button></div>
                         <small>Hyvä doesn't support the legacy captcha; storefront forms break with it on. Swap in Google ReCaptcha (V2/V3) from the admin if you still want bot protection.</small>
                     </li>
                 </ol>
