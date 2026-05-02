@@ -43,6 +43,9 @@ class Configurator extends Component
 
     public ?string $savedAt = null;
 
+    // Hyvä credentials are intentionally NOT part of Selection — they must never be
+    // persisted to SavedConfig or echoed back via the shared /c/{id} link.
+
     /** Hyvä packagist authentication token (free, obtained at hyva.io). */
     public string $hyvaToken = '';
 
@@ -269,7 +272,7 @@ class Configurator extends Component
     #[Computed]
     public function composer(): array
     {
-        return app(ConfiguratorService::class)->build($this->selection());
+        return app(ConfiguratorService::class)->build($this->selection(), $this->hyvaProject);
     }
 
     #[Computed]

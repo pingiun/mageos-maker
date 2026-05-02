@@ -19,7 +19,7 @@ class Configurator
         private readonly string $repositoryUrl,
     ) {}
 
-    public function build(Selection $selection): array
+    public function build(Selection $selection, string $hyvaProject = ''): array
     {
         $resolved = $this->resolveProfileGroups($selection);
 
@@ -30,6 +30,14 @@ class Configurator
         $effectiveEnabledLayers = array_values(array_unique(array_merge($resolved['forceLayers'], $selection->enabledLayers)));
 
         $composer = $this->baseComposer($selection->version);
+
+        $hyvaProject = trim($hyvaProject);
+        if ($hyvaProject !== '') {
+            $composer['repositories'][] = [
+                'type' => 'composer',
+                'url' => "https://hyva-themes.repo.packagist.com/{$hyvaProject}/",
+            ];
+        }
 
         // Add-ons: append to require.
         foreach ($effectiveAddons as $addon) {
