@@ -93,7 +93,8 @@
                                     @endphp
                                     <label class="{{ $vAvailable ? '' : 'forced' }}" style="display:block;">
                                         <input type="radio"
-                                            wire:model.live="optionVariants.{{ $groupName }}.{{ $opt['name'] }}"
+                                            name="variant-{{ $groupName }}-{{ $opt['name'] }}"
+                                            wire:click="setOptionVariant('{{ $groupName }}', '{{ $opt['name'] }}', '{{ $variant['name'] }}')"
                                             value="{{ $variant['name'] }}"
                                             @if ($activeVariant === $variant['name']) checked @endif
                                             @disabled(! $vAvailable)>

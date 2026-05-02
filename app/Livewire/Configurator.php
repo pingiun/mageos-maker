@@ -113,14 +113,21 @@ class Configurator extends Component
     }
 
     /**
+     * Click handler for variant radios. wire:model can't bind to optionVariants
+     * directly because the natural key contains a dot (e.g. "checkout.loki-checkout")
+     * and Livewire interprets dots as nested-array path segments — the binding
+     * would write/read the wrong key.
+     */
+    public function setOptionVariant(string $group, string $option, string $variant): void
+    {
+        $this->optionVariants["$group.$option"] = $variant;
+    }
+
+    /**
      * For every option that declares variants, write the resolved active variant
-     * back into $optionVariants. Without this, wire:model on the variant radios
-     * sees an empty entry and overrides the static `checked` attribute that
-     * marks the resolved default — so the radios render as if nothing is picked.
-     *
-     * Resolution prefers an existing user pick (when its requires is met), so
-     * calling this is idempotent for already-set keys and only fills in
-     * defaults for unset ones.
+     * back into $optionVariants. Resolution prefers an existing user pick (when
+     * its requires is met), so this only fills in defaults for unset/stale
+     * entries; explicit picks are preserved.
      */
     private function syncOptionVariants(): void
     {
