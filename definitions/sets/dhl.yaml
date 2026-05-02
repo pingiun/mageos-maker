@@ -1,0 +1,5 @@
+name: dhl
+label: DHL shipping
+description: DHL shipping carrier integration
+packages:
+  - mage-os/module-dhl
