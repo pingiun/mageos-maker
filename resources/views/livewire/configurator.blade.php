@@ -159,8 +159,11 @@
                     @include('livewire.partials.install-tree-node', ['nodes' => $tree['tree'], 'depth' => 0])
                 </div>
                 <style>
-                    .install-tree-root details { padding-left: 14px; }
-                    .install-tree-root > details { padding-left: 0; }
+                    /* Indent applies to the children of a <details> (both nested details and leaves)
+                       so a package with children doesn't end up further right than its sibling leaves
+                       just because of the disclosure triangle. */
+                    .install-tree-root details > details,
+                    .install-tree-root details > .leaf { margin-left: 14px; }
                     .install-tree-root summary { cursor: pointer; list-style: none; padding: 1px 0; }
                     .install-tree-root summary::-webkit-details-marker { display: none; }
                     .install-tree-root summary::before {
