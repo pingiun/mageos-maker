@@ -46,9 +46,6 @@ class Configurator extends Component
     /** @var list<string> Profile-group option subtoggle keys ("group.option[.variant].sub") currently enabled. Positive list. */
     public array $enabledOptionSubtoggles = [];
 
-    /** @var array<string,string> Per-option variant pick: ['<group>.<option>' => '<variantName>']. */
-    public array $optionVariants = [];
-
     /** Last user-visible auto-snap message, e.g. "Checkout reset to default — Loki (Hyvä) requires the Hyvä theme." */
     public ?string $autoSnapNotice = null;
 
@@ -309,7 +306,6 @@ class Configurator extends Component
             profileGroups: $this->profileGroups,
             disabledSubtoggles: array_values(array_diff($allSubtoggles, $this->enabledSubtoggles)),
             enabledOptionSubtoggles: $this->enabledOptionSubtoggles,
-            optionVariants: $this->optionVariants,
         );
     }
 
@@ -395,7 +391,6 @@ class Configurator extends Component
         $this->profileGroups = $sel->profileGroups;
         $this->enabledSubtoggles = array_values(array_diff($defs->allSubtoggleKeys(), $sel->disabledSubtoggles));
         $this->enabledOptionSubtoggles = $sel->enabledOptionSubtoggles;
-        $this->optionVariants = $sel->optionVariants;
         // Apply soft defaults on top of the selection's explicit enabledAddons.
         $defaulted = $configurator->defaultedAddons($sel);
         $this->enabledAddons = array_values(array_unique(array_merge($sel->enabledAddons, $defaulted)));

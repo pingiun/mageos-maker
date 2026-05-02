@@ -211,27 +211,27 @@ class Definitions
     }
 
     /**
-     * The variant that's currently active for an option, given the user's explicit
-     * pick (if any) and the profileGroups state. Resolution order:
-     *   1. user's explicit pick if its `requires` is met
-     *   2. the variant flagged with `default: true` if its `requires` is met
-     *   3. first variant whose `requires` is met
-     *   4. null if none qualify
+     * The variant that's currently active for an option, derived purely from the
+     * profileGroups state. Resolution order:
+     *   1. variant flagged with `default: true` if its `requires` is met
+     *   2. first variant whose `requires` is met
+     *   3. null if none qualify
+     *
+     * Variants are deliberately not user-pickable: a variant's identity is
+     * meaningful only as a function of the rest of the configuration (e.g.
+     * Loki Checkout's Hyvä variant only makes sense when theme=hyva). The
+     * UI shows which variant is active but doesn't expose it as a separate
+     * choice.
      *
      * @param  array<string,string>  $profileGroups
-     * @param  array<string,string>  $userPicks  map "<group>.<option>" → variant name
      */
-    public function optionActiveVariant(string $group, string $option, array $profileGroups, array $userPicks): ?string
+    public function optionActiveVariant(string $group, string $option, array $profileGroups): ?string
     {
         $variants = $this->optionVariants($group, $option);
         if ($variants === []) {
             return null;
         }
-        $variantMeets = function (string $vName) use ($variants, $profileGroups): bool {
-            $v = $variants[$vName] ?? null;
-            if ($v === null) {
-                return false;
-            }
+        $meets = function (array $v) use ($profileGroups): bool {
             foreach (($v['requires']['profileGroups'] ?? []) as $g => $expected) {
                 if (($profileGroups[$g] ?? null) !== $expected) {
                     return false;
@@ -240,17 +240,13 @@ class Definitions
             return true;
         };
 
-        $picked = $userPicks["$group.$option"] ?? null;
-        if ($picked !== null && $variantMeets($picked)) {
-            return $picked;
-        }
         foreach ($variants as $name => $v) {
-            if (! empty($v['default']) && $variantMeets($name)) {
+            if (! empty($v['default']) && $meets($v)) {
                 return $name;
             }
         }
-        foreach ($variants as $name => $_v) {
-            if ($variantMeets($name)) {
+        foreach ($variants as $name => $v) {
+            if ($meets($v)) {
                 return $name;
             }
         }

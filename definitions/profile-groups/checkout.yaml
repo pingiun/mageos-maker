@@ -22,17 +22,11 @@ options:
         requires:
           profileGroups:
             theme: hyva
-        enables:
+        forces:
           addons: [loki-checkout-hyva]
       - name: luma
         label: Luma variant
-        preferAlternative:
-          when:
-            profileGroups:
-              theme: hyva
-          use: hyva
-          reason: more performant on Hyvä
-        enables:
+        forces:
           addons: [loki-checkout-luma]
         subtoggles:
           - name: luma-components

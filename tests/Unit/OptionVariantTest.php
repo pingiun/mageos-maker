@@ -30,11 +30,11 @@ class OptionVariantTest extends TestCase
                         [
                             'name' => 'hyva', 'label' => 'Hyva variant', 'default' => true,
                             'requires' => ['profileGroups' => ['theme' => 'hyva']],
-                            'enables' => ['addons' => ['loki-hyva']],
+                            'forces' => ['addons' => ['loki-hyva']],
                         ],
                         [
                             'name' => 'luma', 'label' => 'Luma variant',
-                            'enables' => ['addons' => ['loki-luma']],
+                            'forces' => ['addons' => ['loki-luma']],
                             'subtoggles' => [
                                 ['name' => 'lean', 'label' => 'Lean', 'addons' => ['loki-lean'], 'default' => true],
                             ],
@@ -49,10 +49,9 @@ class OptionVariantTest extends TestCase
     public function test_active_variant_resolution(): void
     {
         $defs = $this->defs();
-        $this->assertSame('hyva', $defs->optionActiveVariant('checkout', 'loki', ['theme' => 'hyva'], []));
-        $this->assertSame('luma', $defs->optionActiveVariant('checkout', 'loki', ['theme' => 'luma'], []));
-        $this->assertSame('luma', $defs->optionActiveVariant('checkout', 'loki', ['theme' => 'luma'], ['checkout.loki' => 'hyva']));
-        $this->assertSame('luma', $defs->optionActiveVariant('checkout', 'loki', ['theme' => 'hyva'], ['checkout.loki' => 'luma']));
+        // Variant tracks theme, no user pick: theme=hyva → hyva variant; theme=luma → luma.
+        $this->assertSame('hyva', $defs->optionActiveVariant('checkout', 'loki', ['theme' => 'hyva']));
+        $this->assertSame('luma', $defs->optionActiveVariant('checkout', 'loki', ['theme' => 'luma']));
     }
 
     public function test_active_variant_addons_flow_into_require(): void
@@ -62,8 +61,8 @@ class OptionVariantTest extends TestCase
         $catalog->method('packageVersions')->willReturn([]);
         $cfg = new Configurator($defs, $catalog, 'https://example.com/');
 
-        $sel = new Selection('1.0.0', null, [], [], [], ['loki-hyva'],
-            ['theme' => 'hyva', 'checkout' => 'loki'], [], [], []);
+        $sel = new Selection('1.0.0', null, [], [], [], [],
+            ['theme' => 'hyva', 'checkout' => 'loki'], [], []);
         $c = $cfg->build($sel);
         $this->assertArrayHasKey('loki/hyva', $c['require']);
         $this->assertArrayNotHasKey('loki/luma', $c['require']);
@@ -76,9 +75,9 @@ class OptionVariantTest extends TestCase
         $catalog->method('packageVersions')->willReturn([]);
         $cfg = new Configurator($defs, $catalog, 'https://example.com/');
 
-        $sel = new Selection('1.0.0', null, [], [], [], ['loki-luma', 'loki-lean'],
+        $sel = new Selection('1.0.0', null, [], [], [], [],
             ['theme' => 'luma', 'checkout' => 'loki'], [],
-            ['checkout.loki.luma.lean'], []);
+            ['checkout.loki.luma.lean']);
         $c = $cfg->build($sel);
         $this->assertArrayHasKey('loki/luma', $c['require']);
         $this->assertArrayHasKey('loki/lean', $c['require']);
