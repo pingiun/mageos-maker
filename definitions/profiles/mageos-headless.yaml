@@ -10,15 +10,6 @@ selection:
     - persistent-cart
     - product-alert
   disabledSubtoggles:
-    - recaptcha.checkout
-    - recaptcha.contact
-    - recaptcha.customer
-    - recaptcha.newsletter
-    - recaptcha.paypal
-    - recaptcha.review
-    - recaptcha.send-friend
-    - recaptcha.store-pickup
-    - recaptcha.wishlist
     - page-builder.analytics
   disabledLayers: []
   enabledLayers: []
