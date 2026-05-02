@@ -1,23 +1,23 @@
 name: two-factor-auth
 label: Two-Factor Authentication
-description: Admin 2FA module. Strongly recommended on production sites — disable only if you're handling 2FA externally (SSO, reverse proxy auth, etc.).
+description: Admin two-factor authentication module
 packages:
   - mage-os/module-two-factor-auth
 subtoggles:
   - name: duo
     label: Duo provider
-    description: Duo Security 2FA provider (most sites use Google Authenticator instead). Disabling prunes the Duo PHP SDKs.
+    description: Duo Security 2FA provider
     packages:
       - duosecurity/duo_api_php
       - duosecurity/duo_universal_php
   - name: u2f
     label: U2F / WebAuthn provider
-    description: Hardware security key support (YubiKey etc.). Disabling prunes the CBOR encoding library.
+    description: Hardware security key provider (YubiKey etc.)
     packages:
       - 2tvenom/cborencode
   - name: totp
     label: TOTP providers (Google Authenticator + Authy)
-    description: Time-based one-time passwords via authenticator apps. Disabling prunes both providers together — they share the same OTP/QR libraries.
+    description: Authenticator-app TOTP providers (share dependencies)
     packages:
       - spomky-labs/otphp
       - christian-riesen/base32

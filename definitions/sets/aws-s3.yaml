@@ -1,5 +1,5 @@
 name: aws-s3
 label: AWS S3 remote storage
-description: Lets Magento store media files (catalog images, uploads, thumbnails) on S3 instead of pub/media. Only active when remote storage is configured; safe to disable if you don't host media on S3 — pulls in the AWS SDK transitively.
+description: S3 adapter for storing media files remotely instead of pub/media
 packages:
   - mage-os/module-aws-s3
