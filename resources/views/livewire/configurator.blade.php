@@ -161,6 +161,56 @@
             <pre class="composer" wire:ignore><code id="composer-out" class="language-json">{{ $this->composerJson }}</code></pre>
         </div>
 
+        @if ($this->usesHyva)
+            @php
+                $token = $hyvaToken !== '' ? $hyvaToken : 'YOUR_HYVA_TOKEN';
+                $project = $hyvaProject !== '' ? $hyvaProject : 'yourProjectName';
+            @endphp
+            <div class="panel hyva-panel">
+                <h2>Hyvä install steps</h2>
+                <p style="font-size:13px;color:#444;margin:0 0 12px;">
+                    The Hyvä Theme is free of charge but requires a packagist token.
+                    Register at <a href="https://www.hyva.io/" target="_blank" rel="noopener">hyva.io</a>
+                    to get your free token and project name, then run these commands in your project root <strong>before</strong>
+                    <code>composer install</code>.
+                    See the <a href="https://docs.hyva.io/hyva-themes/getting-started/index.html" target="_blank" rel="noopener">official docs</a>.
+                </p>
+
+                <div class="hyva-fields">
+                    <label>
+                        <span>Hyvä token</span>
+                        <input type="text" wire:model.live.debounce.300ms="hyvaToken" placeholder="YOUR_HYVA_TOKEN" autocomplete="off">
+                    </label>
+                    <label>
+                        <span>Project name</span>
+                        <input type="text" wire:model.live.debounce.300ms="hyvaProject" placeholder="yourProjectName" autocomplete="off">
+                    </label>
+                </div>
+
+                <ol class="hyva-steps">
+                    <li>
+                        <span class="step-label">Configure composer auth</span>
+                        <pre class="cmd"><code>composer config --auth http-basic.hyva-themes.repo.packagist.com token {{ $token }}</code></pre>
+                    </li>
+                    <li>
+                        <span class="step-label">Add the Hyvä private repository</span>
+                        <pre class="cmd"><code>composer config repositories.hyva-private composer https://hyva-themes.repo.packagist.com/{{ $project }}/</code></pre>
+                    </li>
+                    <li>
+                        <span class="step-label">Install dependencies</span>
+                        <pre class="cmd"><code>composer install</code></pre>
+                    </li>
+                    <li>
+                        <span class="step-label">Activate the theme in Magento</span>
+                        <pre class="cmd"><code>bin/magento setup:upgrade
+bin/magento config:set design/theme/theme_id $(bin/magento dev:theme:list 2>/dev/null | grep Hyva/default | awk '{print $1}')
+bin/magento cache:flush</code></pre>
+                        <small>Or pick <code>Hyva/default</code> from <em>Content → Design → Configuration</em> in the admin.</small>
+                    </li>
+                </ol>
+            </div>
+        @endif
+
         @php $tree = $this->installTree; @endphp
         <div class="panel install-tree">
             <h2>
@@ -241,55 +291,6 @@
             @endif
         </div>
 
-        @if ($this->usesHyva)
-            @php
-                $token = $hyvaToken !== '' ? $hyvaToken : 'YOUR_HYVA_TOKEN';
-                $project = $hyvaProject !== '' ? $hyvaProject : 'yourProjectName';
-            @endphp
-            <div class="panel hyva-panel">
-                <h2>Hyvä install steps</h2>
-                <p style="font-size:13px;color:#444;margin:0 0 12px;">
-                    The Hyvä Theme is free of charge but requires a packagist token.
-                    Register at <a href="https://www.hyva.io/" target="_blank" rel="noopener">hyva.io</a>
-                    to get your free token and project name, then run these commands in your project root <strong>before</strong>
-                    <code>composer install</code>.
-                    See the <a href="https://docs.hyva.io/hyva-themes/getting-started/index.html" target="_blank" rel="noopener">official docs</a>.
-                </p>
-
-                <div class="hyva-fields">
-                    <label>
-                        <span>Hyvä token</span>
-                        <input type="text" wire:model.live.debounce.300ms="hyvaToken" placeholder="YOUR_HYVA_TOKEN" autocomplete="off">
-                    </label>
-                    <label>
-                        <span>Project name</span>
-                        <input type="text" wire:model.live.debounce.300ms="hyvaProject" placeholder="yourProjectName" autocomplete="off">
-                    </label>
-                </div>
-
-                <ol class="hyva-steps">
-                    <li>
-                        <span class="step-label">Configure composer auth</span>
-                        <pre class="cmd"><code>composer config --auth http-basic.hyva-themes.repo.packagist.com token {{ $token }}</code></pre>
-                    </li>
-                    <li>
-                        <span class="step-label">Add the Hyvä private repository</span>
-                        <pre class="cmd"><code>composer config repositories.hyva-private composer https://hyva-themes.repo.packagist.com/{{ $project }}/</code></pre>
-                    </li>
-                    <li>
-                        <span class="step-label">Install dependencies</span>
-                        <pre class="cmd"><code>composer install</code></pre>
-                    </li>
-                    <li>
-                        <span class="step-label">Activate the theme in Magento</span>
-                        <pre class="cmd"><code>bin/magento setup:upgrade
-bin/magento config:set design/theme/theme_id $(bin/magento dev:theme:list 2>/dev/null | grep Hyva/default | awk '{print $1}')
-bin/magento cache:flush</code></pre>
-                        <small>Or pick <code>Hyva/default</code> from <em>Content → Design → Configuration</em> in the admin.</small>
-                    </li>
-                </ol>
-            </div>
-        @endif
     </div>
 </main>
 </div>
