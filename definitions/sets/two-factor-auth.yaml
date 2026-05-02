@@ -1,0 +1,12 @@
+name: two-factor-auth
+label: Two-Factor Authentication
+description: Admin 2FA module. Strongly recommended on production sites — disable only if you're handling 2FA externally (SSO, reverse proxy auth, etc.).
+packages:
+  - mage-os/module-two-factor-auth
+subtoggles:
+  - name: duo
+    label: Duo provider
+    description: Duo Security 2FA provider (most sites use Google Authenticator instead). Disabling prunes the Duo PHP SDKs.
+    packages:
+      - duosecurity/duo_api_php
+      - duosecurity/duo_universal_php
