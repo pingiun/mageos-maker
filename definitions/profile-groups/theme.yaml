@@ -16,5 +16,7 @@ options:
       addons: [hyva]
     forces:
       layers: [hyva-compat]
-    disables:
-      sets: [luma]
+    # Don't auto-disable Luma when Hyvä is picked: some 3rd-party modules still
+    # declare a hard dependency on `mage-os/theme-frontend-luma`, and replacing
+    # it can break composer resolution. Users who really want it gone can still
+    # untick the Luma module manually.
