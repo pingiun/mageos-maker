@@ -126,6 +126,36 @@ class InstallTreeResolverTest extends TestCase
         $this->assertSame(1, $r['count']);
     }
 
+    public function test_returns_spanning_tree_with_first_discoverer_as_parent(): void
+    {
+        // diamond: root -> a, root -> b, a -> shared, b -> shared
+        // BFS visits root, then a (enqueues shared), then b (skips shared since seen).
+        $this->writeBase('1.0.0', [
+            'rootRequires' => ['acme/root'],
+            'packages' => [
+                'acme/root' => ['version' => '1', 'type' => 'metapackage', 'requires' => ['acme/a', 'acme/b'], 'replaces' => []],
+                'acme/a' => ['version' => '1', 'type' => 'library', 'requires' => ['acme/shared'], 'replaces' => []],
+                'acme/b' => ['version' => '1', 'type' => 'library', 'requires' => ['acme/shared'], 'replaces' => []],
+                'acme/shared' => ['version' => '1', 'type' => 'library', 'requires' => [], 'replaces' => []],
+            ],
+        ]);
+
+        $resolver = new InstallTreeResolver($this->emptyDefinitions(), $this->graphsDir);
+        $tree = $resolver->resolve(new Selection('1.0.0', null, [], [], [], [], []))['tree'];
+
+        $this->assertCount(1, $tree);
+        $this->assertSame('acme/root', $tree[0]['name']);
+        $childNames = array_column($tree[0]['children'], 'name');
+        $this->assertSame(['acme/a', 'acme/b'], $childNames);
+        // shared appears under a (first discoverer), not under b.
+        $aChildren = array_column($tree[0]['children'][0]['children'], 'name');
+        $bChildren = array_column($tree[0]['children'][1]['children'], 'name');
+        $this->assertSame(['acme/shared'], $aChildren);
+        $this->assertSame([], $bChildren);
+        // sharedRefs reflects the diamond: 2 packages require shared.
+        $this->assertSame(2, $tree[0]['children'][0]['children'][0]['sharedRefs']);
+    }
+
     public function test_handles_cycles(): void
     {
         $this->writeBase('1.0.0', [

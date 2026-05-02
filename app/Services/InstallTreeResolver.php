@@ -85,16 +85,12 @@ class InstallTreeResolver
         }
 
         $disabled = $this->disabledPackageMap($sel);
-        [$visited, $hits] = $this->bfs($rootRequires, $packages, $disabled);
+        [$visited, $hits, $children] = $this->bfs($rootRequires, $packages, $disabled);
 
         $resultPackages = [];
         $byType = [];
         foreach ($visited as $name) {
             $node = $packages[$name] ?? null;
-            if ($node === null) {
-                // Unknown root require (e.g. a non-stock layer not yet pre-baked).
-                continue;
-            }
             $type = $node['type'] ?? 'library';
             $resultPackages[] = [
                 'name' => $name,
@@ -108,6 +104,11 @@ class InstallTreeResolver
         usort($resultPackages, fn ($a, $b) => [$a['type'], $a['name']] <=> [$b['type'], $b['name']]);
         ksort($byType);
 
+        $tree = $this->buildTree(array_values(array_filter(
+            $rootRequires,
+            fn ($r) => ! isset($disabled[$r]) && (isset($packages[$r]) || in_array($r, $visited, true)),
+        )), $children, $packages);
+
         return [
             'version' => $base['version'],
             'count' => count($resultPackages),
@@ -116,7 +117,42 @@ class InstallTreeResolver
             'packages' => $resultPackages,
             'byType' => $byType,
             'disabledHits' => array_keys($hits),
+            'tree' => $tree,
         ];
+    }
+
+    /**
+     * Build a nested spanning tree from the BFS children map. Each node appears
+     * exactly once, under its first discoverer (BFS parent). Shared deps are
+     * marked with childCount on the node so the UI can show the duplication.
+     *
+     * @param  list<string>  $roots
+     * @param  array<string,list<string>>  $children
+     * @param  array<string,array{version?:string,type?:string,requires?:list<string>}>  $packages
+     * @return list<array{name:string,version:string,type:string,sharedRefs:int,children:list<mixed>}>
+     */
+    private function buildTree(array $roots, array $children, array $packages): array
+    {
+        $sharedRefs = [];
+        foreach ($packages as $name => $pkg) {
+            foreach ($pkg['requires'] ?? [] as $dep) {
+                $sharedRefs[$dep] = ($sharedRefs[$dep] ?? 0) + 1;
+            }
+        }
+
+        $build = function (string $name) use (&$build, $children, $packages, $sharedRefs): array {
+            $node = $packages[$name] ?? [];
+            $kids = $children[$name] ?? [];
+            sort($kids);
+            return [
+                'name' => $name,
+                'version' => $node['version'] ?? '?',
+                'type' => $node['type'] ?? 'library',
+                'sharedRefs' => $sharedRefs[$name] ?? 0,
+                'children' => array_map($build, $kids),
+            ];
+        };
+        return array_map($build, $roots);
     }
 
     /**
@@ -146,42 +182,55 @@ class InstallTreeResolver
 
     /**
      * Iterative BFS with a head-pointer FIFO (avoids array_shift cost).
-     * Returns [visitedInOrder, disabledHitsThatWerePruned].
+     * Returns [visitedInOrder, disabledHits, childrenSpanningTree].
+     *
+     * The spanning tree records, for each visited node, the deps it discovered
+     * for the first time — i.e. the BFS-tree children. Shared dependencies
+     * therefore appear under exactly one parent (the first one visited).
      *
      * @param  list<string>  $roots
      * @param  array<string,array{requires?:list<string>}>  $packages
      * @param  array<string,bool>  $disabled
-     * @return array{0:list<string>,1:array<string,bool>}
+     * @return array{0:list<string>,1:array<string,bool>,2:array<string,list<string>>}
      */
     private function bfs(array $roots, array $packages, array $disabled): array
     {
         $visited = [];
         $seen = [];
         $hits = [];
+        $children = [];
         $queue = [];
+
         foreach ($roots as $r) {
+            if (isset($seen[$r])) {
+                continue;
+            }
+            $seen[$r] = true;
+            if (isset($disabled[$r])) {
+                $hits[$r] = true;
+                continue;
+            }
             $queue[] = $r;
         }
 
         for ($i = 0; $i < count($queue); $i++) {
             $name = $queue[$i];
-            if (isset($seen[$name])) {
-                continue;
-            }
-            if (isset($disabled[$name])) {
-                $hits[$name] = true;
-                $seen[$name] = true;
-                continue;
-            }
-            $seen[$name] = true;
             $visited[] = $name;
+            $children[$name] = [];
             foreach ($packages[$name]['requires'] ?? [] as $dep) {
-                if (! isset($seen[$dep])) {
-                    $queue[] = $dep;
+                if (isset($seen[$dep])) {
+                    continue;
                 }
+                $seen[$dep] = true;
+                if (isset($disabled[$dep])) {
+                    $hits[$dep] = true;
+                    continue;
+                }
+                $queue[] = $dep;
+                $children[$name][] = $dep;
             }
         }
-        return [$visited, $hits];
+        return [$visited, $hits, $children];
     }
 
     public function loadBase(string $version): ?array

@@ -150,21 +150,53 @@
                     @foreach ($tree['byType'] as $type => $n)
                         <span style="margin-right:8px;">{{ $type }}: {{ $n }}</span>
                     @endforeach
+                    <span style="margin-left:auto;">
+                        <a href="#" onclick="installTreeToggleAll(true);return false;" style="font-size:11px;">expand all</a> ·
+                        <a href="#" onclick="installTreeToggleAll(false);return false;" style="font-size:11px;">collapse</a>
+                    </span>
                 </div>
-                <ul id="install-tree-list" class="install-tree-list" style="list-style:none;padding:0;margin:0;max-height:360px;overflow:auto;font-family:monospace;font-size:12px;">
-                    @foreach ($tree['packages'] as $pkg)
-                        <li data-name="{{ $pkg['name'] }}" style="padding:2px 4px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;gap:8px;">
-                            <span>{{ $pkg['name'] }}</span>
-                            <span style="color:#888;">{{ $pkg['version'] }}</span>
-                        </li>
-                    @endforeach
-                </ul>
+                <div id="install-tree-root" class="install-tree-root" style="max-height:420px;overflow:auto;font-family:monospace;font-size:12px;line-height:1.5;">
+                    @include('livewire.partials.install-tree-node', ['nodes' => $tree['tree'], 'depth' => 0])
+                </div>
+                <style>
+                    .install-tree-root details { padding-left: 14px; }
+                    .install-tree-root > details { padding-left: 0; }
+                    .install-tree-root summary { cursor: pointer; list-style: none; padding: 1px 0; }
+                    .install-tree-root summary::-webkit-details-marker { display: none; }
+                    .install-tree-root summary::before {
+                        content: '▸'; display: inline-block; width: 10px; color: #888;
+                        transition: transform .1s;
+                    }
+                    .install-tree-root details[open] > summary::before { content: '▾'; }
+                    .install-tree-root .leaf::before { content: '·'; color: #ccc; display: inline-block; width: 10px; }
+                    .install-tree-root .pkg-name { color: #1a5fb4; }
+                    .install-tree-root .pkg-name.shared { color: #555; font-style: italic; }
+                    .install-tree-root .pkg-version { color: #888; margin-left: 6px; }
+                    .install-tree-root .pkg-type { color: #aaa; font-size: 10px; margin-left: 6px; }
+                    .install-tree-root .hidden { display: none; }
+                </style>
                 <script>
                     function filterInstallTree(q) {
-                        q = q.toLowerCase();
-                        document.querySelectorAll('#install-tree-list li').forEach(li => {
-                            li.style.display = li.dataset.name.toLowerCase().includes(q) ? '' : 'none';
-                        });
+                        q = q.trim().toLowerCase();
+                        const root = document.getElementById('install-tree-root');
+                        if (!root) return;
+                        // Walk depth-first; node visible iff itself matches OR any descendant matches.
+                        function walk(el) {
+                            const name = (el.dataset.name || '').toLowerCase();
+                            let selfMatch = q === '' || name.includes(q);
+                            let descMatch = false;
+                            el.querySelectorAll(':scope > details, :scope > .leaf').forEach(child => {
+                                if (walk(child)) descMatch = true;
+                            });
+                            const visible = selfMatch || descMatch;
+                            el.classList.toggle('hidden', !visible);
+                            if (q !== '' && descMatch && el.tagName === 'DETAILS') el.open = true;
+                            return visible;
+                        }
+                        root.querySelectorAll(':scope > details, :scope > .leaf').forEach(walk);
+                    }
+                    function installTreeToggleAll(open) {
+                        document.querySelectorAll('#install-tree-root details').forEach(d => d.open = open);
                     }
                 </script>
             @endif
