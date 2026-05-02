@@ -43,6 +43,12 @@ class Configurator extends Component
     /** @var list<string> Subtoggle keys ("setName.subName") currently enabled. Universe minus this = disabled. */
     public array $enabledSubtoggles = [];
 
+    /** @var list<string> Profile-group option subtoggle keys ("group.option.sub") currently enabled. Positive list. */
+    public array $enabledOptionSubtoggles = [];
+
+    /** Last user-visible auto-snap message, e.g. "Checkout reset to default — Loki (Hyvä) requires the Hyvä theme." */
+    public ?string $autoSnapNotice = null;
+
     public ?string $savedId = null;
 
     public ?string $savedAt = null;
@@ -93,8 +99,34 @@ class Configurator extends Component
     public function updated(string $name): void
     {
         if ($name === 'profileGroups' || str_starts_with($name, 'profileGroups.')) {
+            $this->autoSnapInvalidOptions();
             $this->reapplySoftDefaults();
         }
+    }
+
+    /**
+     * After a profile-group change, walk every other group and snap it back to
+     * its default if the previously-picked option's `requires` is no longer met.
+     * Records a single user-facing notice when at least one snap happens.
+     */
+    private function autoSnapInvalidOptions(): void
+    {
+        $defs = app(Definitions::class);
+        $messages = [];
+        foreach ($this->profileGroups as $groupName => $optionName) {
+            if ($defs->optionMeetsRequires($groupName, $optionName, $this->profileGroups)) {
+                continue;
+            }
+            $default = $defs->defaultProfileGroupOption($groupName);
+            if ($default === null || $default === $optionName) {
+                continue;
+            }
+            $optionLabel = $defs->profileGroupOption($groupName, $optionName)['label'] ?? $optionName;
+            $groupLabel = $defs->profileGroups[$groupName]['label'] ?? $groupName;
+            $messages[] = "$groupLabel reset to default — $optionLabel is no longer compatible with the current selection.";
+            $this->profileGroups[$groupName] = $default;
+        }
+        $this->autoSnapNotice = $messages !== [] ? implode(' ', $messages) : null;
     }
 
     /**
@@ -273,6 +305,7 @@ class Configurator extends Component
             enabledAddons: $this->enabledAddons,
             profileGroups: $this->profileGroups,
             disabledSubtoggles: array_values(array_diff($allSubtoggles, $this->enabledSubtoggles)),
+            enabledOptionSubtoggles: $this->enabledOptionSubtoggles,
         );
     }
 
@@ -357,6 +390,7 @@ class Configurator extends Component
         $this->enabledStockLayers = array_values(array_diff($stockLayers, $sel->disabledLayers));
         $this->profileGroups = $sel->profileGroups;
         $this->enabledSubtoggles = array_values(array_diff($defs->allSubtoggleKeys(), $sel->disabledSubtoggles));
+        $this->enabledOptionSubtoggles = $sel->enabledOptionSubtoggles;
         // Apply soft defaults on top of the selection's explicit enabledAddons.
         $defaulted = $configurator->defaultedAddons($sel);
         $this->enabledAddons = array_values(array_unique(array_merge($sel->enabledAddons, $defaulted)));

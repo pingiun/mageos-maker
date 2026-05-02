@@ -28,6 +28,15 @@ class Selection
         public readonly array $profileGroups,
         /** @var list<string> "<setName>.<subName>" keys */
         public readonly array $disabledSubtoggles = [],
+        /**
+         * Profile-group option subtoggles that are currently ON.
+         * Format: "<groupName>.<optionName>.<subName>".
+         * Positive list (matches addon "opt-in by default" convention; entries with
+         * `default: true` get auto-added at hydrate time).
+         *
+         * @var list<string>
+         */
+        public readonly array $enabledOptionSubtoggles = [],
     ) {}
 
     public static function default(string $version, Definitions $defs): self
@@ -49,6 +58,7 @@ class Selection
             enabledAddons: [],
             profileGroups: $profileGroups,
             disabledSubtoggles: [],
+            enabledOptionSubtoggles: $defs->defaultOnOptionSubtoggleKeys(),
         );
 
         if ($self->profile !== null && isset($defs->profiles[$self->profile])) {
@@ -69,6 +79,7 @@ class Selection
             enabledAddons: array_values($data['enabledAddons'] ?? []),
             profileGroups: $data['profileGroups'] ?? [],
             disabledSubtoggles: array_values($data['disabledSubtoggles'] ?? []),
+            enabledOptionSubtoggles: array_values($data['enabledOptionSubtoggles'] ?? $defs->defaultOnOptionSubtoggleKeys()),
         );
     }
 
@@ -83,6 +94,7 @@ class Selection
             'enabledAddons' => $this->enabledAddons,
             'profileGroups' => $this->profileGroups,
             'disabledSubtoggles' => $this->disabledSubtoggles,
+            'enabledOptionSubtoggles' => $this->enabledOptionSubtoggles,
         ];
     }
 
@@ -98,6 +110,7 @@ class Selection
             enabledAddons: array_values(array_unique(array_merge($this->enabledAddons, $sel['enabledAddons'] ?? []))),
             profileGroups: array_merge($this->profileGroups, $sel['profileGroups'] ?? []),
             disabledSubtoggles: array_values(array_unique(array_merge($this->disabledSubtoggles, $sel['disabledSubtoggles'] ?? []))),
+            enabledOptionSubtoggles: array_values(array_unique(array_merge($this->enabledOptionSubtoggles, $sel['enabledOptionSubtoggles'] ?? []))),
         );
     }
 }

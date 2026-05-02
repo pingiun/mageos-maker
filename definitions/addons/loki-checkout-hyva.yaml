@@ -1,6 +1,6 @@
-name: loki-checkout
-label: Loki Checkout
-description: Loki Checkout for Hyvä (commercial)
+name: loki-checkout-hyva
+label: Loki Checkout (Hyvä)
+description: Loki Checkout for Hyvä themes (commercial)
 packages:
   - loki-checkout/magento2-hyva
 repositories:

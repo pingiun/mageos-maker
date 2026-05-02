@@ -1,0 +1,8 @@
+name: loki-checkout-luma
+label: Loki Checkout (Luma)
+description: Loki Checkout for the stock Luma theme (commercial)
+packages:
+  - loki-checkout/magento2-luma
+repositories:
+  - type: composer
+    url: https://composer.yireo.com/

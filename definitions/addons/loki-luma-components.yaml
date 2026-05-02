@@ -1,0 +1,8 @@
+name: loki-luma-components
+label: LokiTheme LumaComponents
+description: Strips unused Luma JavaScript for Loki Checkout (Luma)
+packages:
+  - loki-theme/magento2-luma-components
+repositories:
+  - type: composer
+    url: https://composer.yireo.com/

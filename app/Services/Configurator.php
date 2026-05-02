@@ -26,7 +26,11 @@ class Configurator
         $disabledSets = array_values(array_unique(array_merge($resolved['disableSets'], $selection->disabledSets)));
         $disabledLayers = array_values(array_unique(array_merge($resolved['disableLayers'], $selection->disabledLayers)));
         // Forced items always go in, soft defaults only when echoed back via the form.
-        $effectiveAddons = array_values(array_unique(array_merge($resolved['forceAddons'], $selection->enabledAddons)));
+        $effectiveAddons = array_values(array_unique(array_merge(
+            $resolved['forceAddons'],
+            $selection->enabledAddons,
+            $this->activeOptionSubtoggleAddons($selection),
+        )));
         $effectiveEnabledLayers = array_values(array_unique(array_merge($resolved['forceLayers'], $selection->enabledLayers)));
 
         $composer = $this->baseComposer($selection->version);
@@ -213,6 +217,16 @@ class Configurator
             if ($option === null) {
                 continue;
             }
+            // Option's requires constraint not satisfied → treat as if the group's
+            // default option were picked. UI prevents this in normal flow; this is
+            // the belt-and-braces fallback for saved-config replay or CLI flag combos.
+            if (! $this->defs->optionMeetsRequires($group, $optionName, $selection->profileGroups)) {
+                $defaultName = $this->defs->defaultProfileGroupOption($group);
+                if ($defaultName === null || $defaultName === $optionName) {
+                    continue;
+                }
+                $option = $this->defs->profileGroupOption($group, $defaultName) ?? [];
+            }
             $defaultAddons = array_merge($defaultAddons, $option['enables']['addons'] ?? []);
             $defaultLayers = array_merge($defaultLayers, $option['enables']['layers'] ?? []);
             $forceAddons = array_merge($forceAddons, $option['forces']['addons'] ?? []);
@@ -229,5 +243,30 @@ class Configurator
             'disableSets' => $disableSets,
             'disableLayers' => $disableLayers,
         ];
+    }
+
+    /**
+     * Resolve the addon names contributed by enabled option-subtoggles.
+     * A subtoggle only contributes if (a) its parent option is the currently-picked
+     * radio in its group AND (b) the option's `requires` constraint is satisfied.
+     *
+     * @return list<string>
+     */
+    private function activeOptionSubtoggleAddons(Selection $selection): array
+    {
+        $out = [];
+        foreach ($selection->enabledOptionSubtoggles as $key) {
+            [$group, $option, $sub] = array_pad(explode('.', $key, 3), 3, '');
+            if ($sub === '' || ($selection->profileGroups[$group] ?? null) !== $option) {
+                continue;
+            }
+            if (! $this->defs->optionMeetsRequires($group, $option, $selection->profileGroups)) {
+                continue;
+            }
+            foreach ($this->defs->optionSubtoggleAddons($group, $option, $sub) as $addon) {
+                $out[] = $addon;
+            }
+        }
+        return $out;
     }
 }

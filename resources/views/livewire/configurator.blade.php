@@ -36,14 +36,67 @@
                 <h2>{{ $group['label'] }}</h2>
                 <div class="radio-group">
                     @foreach ($group['options'] as $opt)
-                        <label>
-                            <input type="radio" wire:model.live="profileGroups.{{ $groupName }}" value="{{ $opt['name'] }}">
+                        @php
+                            $defsHelper = app(\App\Services\Definitions::class);
+                            $available = $defsHelper->optionMeetsRequires($groupName, $opt['name'], $profileGroups);
+                            $recommended = $defsHelper->optionMeetsRecommends($groupName, $opt['name'], $profileGroups);
+                            $isPicked = ($profileGroups[$groupName] ?? null) === $opt['name'];
+                            $hint = '';
+                            if (! $available) {
+                                $reqs = [];
+                                foreach (($opt['requires']['profileGroups'] ?? []) as $g => $needed) {
+                                    $reqOpt = collect($profileGroupDefs[$g]['options'] ?? [])->firstWhere('name', $needed);
+                                    $reqs[] = ($profileGroupDefs[$g]['label'] ?? $g).' = '.($reqOpt['label'] ?? $needed);
+                                }
+                                $hint = '(needs '.implode(', ', $reqs).')';
+                            } elseif (! $recommended) {
+                                $recs = [];
+                                foreach (($opt['recommends']['profileGroups'] ?? []) as $g => $needed) {
+                                    $recOpt = collect($profileGroupDefs[$g]['options'] ?? [])->firstWhere('name', $needed);
+                                    $recs[] = ($profileGroupDefs[$g]['label'] ?? $g).' = '.($recOpt['label'] ?? $needed);
+                                }
+                                $hint = '(recommended with '.implode(', ', $recs).')';
+                            }
+                        @endphp
+                        <label class="{{ $available ? '' : 'forced' }}">
+                            <input type="radio"
+                                wire:model.live="profileGroups.{{ $groupName }}"
+                                value="{{ $opt['name'] }}"
+                                @disabled(! $available)>
                             {{ $opt['label'] }}
+                            @if ($hint !== '')
+                                <span class="desc">{{ $hint }}</span>
+                            @endif
                         </label>
+                        @if ($isPicked && $available && ! empty($opt['subtoggles']))
+                            <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                                @foreach ($opt['subtoggles'] as $sub)
+                                    <label style="display:block;">
+                                        <input type="checkbox"
+                                            wire:model.live="enabledOptionSubtoggles"
+                                            value="{{ $groupName }}.{{ $opt['name'] }}.{{ $sub['name'] }}">
+                                        <span>
+                                            {{ $sub['label'] }}
+                                            @if (! empty($sub['description']))
+                                                <span class="desc">{{ $sub['description'] }}</span>
+                                            @endif
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
                     @endforeach
                 </div>
             </div>
         @endforeach
+
+        @if ($autoSnapNotice)
+            <div class="panel" style="background:#fff8e0;border-color:#e6c34c;font-size:12px;color:#7a5a00;"
+                 wire:key="snap-{{ md5($autoSnapNotice) }}">
+                {{ $autoSnapNotice }}
+                <button type="button" wire:click="$set('autoSnapNotice', null)" style="float:right;background:none;border:none;cursor:pointer;color:#7a5a00;">×</button>
+            </div>
+        @endif
 
         <div class="panel">
             <h2>Add-ons</h2>

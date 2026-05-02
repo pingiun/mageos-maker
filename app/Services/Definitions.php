@@ -116,6 +116,93 @@ class Definitions
         return null;
     }
 
+    /**
+     * True iff the given profile-group option's `requires.profileGroups`
+     * constraints are satisfied by the current profileGroups state.
+     * An option without a `requires` block is always available.
+     *
+     * @param  array<string,string>  $profileGroups  current selection state
+     */
+    public function optionMeetsRequires(string $group, string $option, array $profileGroups): bool
+    {
+        $opt = $this->profileGroupOption($group, $option);
+        if ($opt === null) {
+            return false;
+        }
+        $required = $opt['requires']['profileGroups'] ?? [];
+        foreach ($required as $g => $expected) {
+            if (($profileGroups[$g] ?? null) !== $expected) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Soft variant of {@see optionMeetsRequires}. `recommends.profileGroups`
+     * doesn't gate availability — it only drives a UI hint when the user picks
+     * the option in a non-recommended state. Returns true if no recommends
+     * block, or if the recommends are met.
+     *
+     * @param  array<string,string>  $profileGroups
+     */
+    public function optionMeetsRecommends(string $group, string $option, array $profileGroups): bool
+    {
+        $opt = $this->profileGroupOption($group, $option);
+        if ($opt === null) {
+            return true;
+        }
+        $rec = $opt['recommends']['profileGroups'] ?? [];
+        foreach ($rec as $g => $expected) {
+            if (($profileGroups[$g] ?? null) !== $expected) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Subtoggles defined under a profile-group option, keyed by sub name.
+     * Each subtoggle: `{name, label, description?, addons: list<string>, default?: bool}`.
+     *
+     * @return array<string,array{name:string,label:string,description?:string,addons:list<string>,default?:bool}>
+     */
+    public function optionSubtoggles(string $group, string $option): array
+    {
+        $opt = $this->profileGroupOption($group, $option);
+        $out = [];
+        foreach ($opt['subtoggles'] ?? [] as $sub) {
+            $out[$sub['name']] = $sub;
+        }
+        return $out;
+    }
+
+    public function optionSubtoggleAddons(string $group, string $option, string $sub): array
+    {
+        return $this->optionSubtoggles($group, $option)[$sub]['addons'] ?? [];
+    }
+
+    /**
+     * "<group>.<option>.<sub>" keys for every option-subtoggle that defaults to ON.
+     * Used to seed the Livewire component's enabledOptionSubtoggles list at hydrate time.
+     *
+     * @return list<string>
+     */
+    public function defaultOnOptionSubtoggleKeys(): array
+    {
+        $keys = [];
+        foreach ($this->profileGroups as $groupName => $group) {
+            foreach ($group['options'] ?? [] as $opt) {
+                foreach ($opt['subtoggles'] ?? [] as $sub) {
+                    if (! empty($sub['default'])) {
+                        $keys[] = "$groupName.{$opt['name']}.{$sub['name']}";
+                    }
+                }
+            }
+        }
+        return $keys;
+    }
+
     public function defaultProfileGroupOption(string $group): ?string
     {
         foreach ($this->profileGroups[$group]['options'] ?? [] as $opt) {
