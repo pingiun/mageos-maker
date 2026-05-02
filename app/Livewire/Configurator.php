@@ -7,6 +7,7 @@ use App\Services\CatalogRepository;
 use App\Services\ComposerJsonRenderer;
 use App\Services\Configurator as ConfiguratorService;
 use App\Services\Definitions;
+use App\Services\InstallTreeResolver;
 use App\Services\Selection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -309,6 +310,12 @@ class Configurator extends Component
     public function defaultedAddons(): array
     {
         return app(ConfiguratorService::class)->defaultedAddons($this->selection());
+    }
+
+    #[Computed]
+    public function installTree(): array
+    {
+        return app(InstallTreeResolver::class)->resolve($this->selection());
     }
 
     /**

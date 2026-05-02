@@ -10,8 +10,10 @@ return [
     // The package whose versions are exposed in the version dropdown.
     'edition_package' => 'mage-os/project-community-edition',
 
-    // Filesystem paths (under storage/app)
+    // Filesystem paths (under storage/app/private when using the local disk)
     'cache_dir' => 'mageos-catalog',
+    'graphs_dir' => 'graphs',
+    'packagist_cache_dir' => 'packagist-cache',
 
     // Where YAML definitions live (relative to base_path()).
     'definitions_path' => 'definitions',

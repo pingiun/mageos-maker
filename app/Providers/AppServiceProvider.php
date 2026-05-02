@@ -6,6 +6,8 @@ use App\Services\CatalogRepository;
 use App\Services\Configurator;
 use App\Services\Definitions;
 use App\Services\DefinitionLoader;
+use App\Services\GraphBaker;
+use App\Services\InstallTreeResolver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,6 +35,19 @@ class AppServiceProvider extends ServiceProvider
             $app->make(Definitions::class),
             $app->make(CatalogRepository::class),
             $app['config']->get('mageos.repository_url'),
+        ));
+
+        $this->app->singleton(InstallTreeResolver::class, fn ($app) => new InstallTreeResolver(
+            $app->make(Definitions::class),
+            $app['config']->get('mageos.graphs_dir', 'graphs'),
+        ));
+
+        $this->app->singleton(GraphBaker::class, fn ($app) => new GraphBaker(
+            $app->make(CatalogRepository::class),
+            $app->make(Definitions::class),
+            $app['config']->get('mageos.edition_package'),
+            $app['config']->get('mageos.graphs_dir', 'graphs'),
+            $app['config']->get('mageos.packagist_cache_dir', 'packagist-cache'),
         ));
     }
 

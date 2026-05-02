@@ -125,6 +125,51 @@
             <pre class="composer" wire:ignore><code id="composer-out" class="language-json">{{ $this->composerJson }}</code></pre>
         </div>
 
+        @php $tree = $this->installTree; @endphp
+        <div class="panel install-tree">
+            <h2>
+                Install tree
+                <span class="stats">{{ $tree['count'] }} packages</span>
+            </h2>
+            @if ($tree['missing'])
+                <p class="warn" style="font-size:12px;color:#a15c00;">
+                    @if ($tree['fallbackVersion'])
+                        No baked graph for {{ $tree['version'] }} yet — showing {{ $tree['fallbackVersion'] }}.
+                    @else
+                        No baked graph available. Run <code>php artisan mageos:catalog:update</code>.
+                    @endif
+                </p>
+            @endif
+            @if ($tree['count'] === 0 && ! $tree['missing'])
+                <p style="font-size:12px;color:#666;">No packages — nothing to show.</p>
+            @else
+                <input type="text" id="install-tree-filter" placeholder="Filter…" autocomplete="off"
+                    style="width:100%;padding:6px 8px;margin-bottom:8px;border:1px solid #ccc;border-radius:3px;font-size:12px;"
+                    oninput="filterInstallTree(this.value)">
+                <div class="install-tree-types" style="font-size:11px;color:#666;margin-bottom:6px;">
+                    @foreach ($tree['byType'] as $type => $n)
+                        <span style="margin-right:8px;">{{ $type }}: {{ $n }}</span>
+                    @endforeach
+                </div>
+                <ul id="install-tree-list" class="install-tree-list" style="list-style:none;padding:0;margin:0;max-height:360px;overflow:auto;font-family:monospace;font-size:12px;">
+                    @foreach ($tree['packages'] as $pkg)
+                        <li data-name="{{ $pkg['name'] }}" style="padding:2px 4px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;gap:8px;">
+                            <span>{{ $pkg['name'] }}</span>
+                            <span style="color:#888;">{{ $pkg['version'] }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+                <script>
+                    function filterInstallTree(q) {
+                        q = q.toLowerCase();
+                        document.querySelectorAll('#install-tree-list li').forEach(li => {
+                            li.style.display = li.dataset.name.toLowerCase().includes(q) ? '' : 'none';
+                        });
+                    }
+                </script>
+            @endif
+        </div>
+
         @if ($this->usesHyva)
             @php
                 $token = $hyvaToken !== '' ? $hyvaToken : 'YOUR_HYVA_TOKEN';
