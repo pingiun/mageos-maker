@@ -109,7 +109,14 @@ class Configurator
      */
     public function forcedAddons(Selection $selection): array
     {
-        return array_values(array_unique($this->resolveProfileGroups($selection)['forceAddons']));
+        return array_values(array_unique(array_merge(
+            $this->resolveProfileGroups($selection)['forceAddons'],
+            // Addons pulled in by an enabled option-subtoggle are likewise out of
+            // the user's direct control in the Add-ons panel — they show up as
+            // forced-checked there, with the subtoggle being the single source
+            // of truth for their on/off state.
+            $this->activeOptionSubtoggleAddons($selection),
+        )));
     }
 
     /**

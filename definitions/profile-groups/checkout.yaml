@@ -30,6 +30,6 @@ options:
           addons: [loki-checkout-luma]
         subtoggles:
           - name: luma-components
-            label: Strip unused Luma JS
+            label: Strip Luma JS files not required by Loki
             addons: [loki-luma-components]
             default: true
