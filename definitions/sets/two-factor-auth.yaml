@@ -10,3 +10,15 @@ subtoggles:
     packages:
       - duosecurity/duo_api_php
       - duosecurity/duo_universal_php
+  - name: u2f
+    label: U2F / WebAuthn provider
+    description: Hardware security key support (YubiKey etc.). Disabling prunes the CBOR encoding library.
+    packages:
+      - 2tvenom/cborencode
+  - name: totp
+    label: TOTP providers (Google Authenticator + Authy)
+    description: Time-based one-time passwords via authenticator apps. Disabling prunes both providers together — they share the same OTP/QR libraries.
+    packages:
+      - spomky-labs/otphp
+      - christian-riesen/base32
+      - endroid/qr-code
