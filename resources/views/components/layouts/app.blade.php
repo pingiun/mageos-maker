@@ -25,6 +25,9 @@
         .checkbox-list label .desc { display: block; font-size: 12px; color: #666; margin-top: 2px; }
         .radio-group { display: flex; flex-direction: column; gap: 6px; }
         .radio-group label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .radio-group label .desc { font-size: 11px; color: #888; font-weight: normal; margin-left: 4px; }
+        .radio-group label.forced { color: #aaa; cursor: not-allowed; }
+        .radio-group label.forced .desc { color: #b0b0b0; }
         .right { display: flex; flex-direction: column; gap: 16px; }
         pre.composer { padding: 0; border-radius: 6px; overflow: auto; font-size: 12.5px; line-height: 1.55; max-height: 78vh; margin: 0; position: relative; }
         pre.composer code.hljs { display: block; padding: 18px 20px; background: #1e1e23; border-radius: 6px; position: relative; z-index: 1; }
