@@ -67,7 +67,77 @@
                                 <span class="desc">{{ $hint }}</span>
                             @endif
                         </label>
-                        @if ($isPicked && $available && ! empty($opt['subtoggles']))
+                        @if ($isPicked && $available && ! empty($opt['variants']))
+                            @php
+                                $activeVariant = $defsHelper->optionActiveVariant($groupName, $opt['name'], $profileGroups, $optionVariants);
+                            @endphp
+                            <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                                @foreach ($opt['variants'] as $variant)
+                                    @php
+                                        $vAvailable = true;
+                                        foreach (($variant['requires']['profileGroups'] ?? []) as $g => $needed) {
+                                            if (($profileGroups[$g] ?? null) !== $needed) {
+                                                $vAvailable = false;
+                                                break;
+                                            }
+                                        }
+                                        $vPrefer = null;
+                                        if (! empty($variant['preferAlternative']['use']) && ! empty($variant['preferAlternative']['when']['profileGroups'])) {
+                                            $match = true;
+                                            foreach ($variant['preferAlternative']['when']['profileGroups'] as $g => $needed) {
+                                                if (($profileGroups[$g] ?? null) !== $needed) { $match = false; break; }
+                                            }
+                                            if ($match) {
+                                                $altV = collect($opt['variants'])->firstWhere('name', $variant['preferAlternative']['use']);
+                                                $vPrefer = ($altV['label'] ?? $variant['preferAlternative']['use']);
+                                                if (! empty($variant['preferAlternative']['reason'])) {
+                                                    $vPrefer .= ' — '.$variant['preferAlternative']['reason'];
+                                                }
+                                            }
+                                        }
+                                        $vHint = '';
+                                        if (! $vAvailable) {
+                                            $reqs = [];
+                                            foreach (($variant['requires']['profileGroups'] ?? []) as $g => $needed) {
+                                                $reqOpt = collect($profileGroupDefs[$g]['options'] ?? [])->firstWhere('name', $needed);
+                                                $reqs[] = ($profileGroupDefs[$g]['label'] ?? $g).' = '.($reqOpt['label'] ?? $needed);
+                                            }
+                                            $vHint = '(needs '.implode(', ', $reqs).')';
+                                        } elseif ($vPrefer) {
+                                            $vHint = "(prefer {$vPrefer})";
+                                        }
+                                    @endphp
+                                    <label class="{{ $vAvailable ? '' : 'forced' }}" style="display:block;">
+                                        <input type="radio"
+                                            wire:model.live="optionVariants.{{ $groupName }}.{{ $opt['name'] }}"
+                                            value="{{ $variant['name'] }}"
+                                            @if ($activeVariant === $variant['name']) checked @endif
+                                            @disabled(! $vAvailable)>
+                                        {{ $variant['label'] }}
+                                        @if ($vHint !== '')
+                                            <span class="desc">{{ $vHint }}</span>
+                                        @endif
+                                    </label>
+                                    @if ($activeVariant === $variant['name'] && $vAvailable && ! empty($variant['subtoggles']))
+                                        <div style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                                            @foreach ($variant['subtoggles'] as $sub)
+                                                <label style="display:block;">
+                                                    <input type="checkbox"
+                                                        wire:model.live="enabledOptionSubtoggles"
+                                                        value="{{ $groupName }}.{{ $opt['name'] }}.{{ $variant['name'] }}.{{ $sub['name'] }}">
+                                                    <span>
+                                                        {{ $sub['label'] }}
+                                                        @if (! empty($sub['description']))
+                                                            <span class="desc">{{ $sub['description'] }}</span>
+                                                        @endif
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @elseif ($isPicked && $available && ! empty($opt['subtoggles']))
                             <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
                                 @foreach ($opt['subtoggles'] as $sub)
                                     <label style="display:block;">

@@ -8,16 +8,17 @@ use Tests\TestCase;
 
 /**
  * End-to-end Loki Checkout: real definitions YAML → composer.json shape,
- * via the live service-container-resolved Configurator. Locks in the
- * theme-gating + option-subtoggle wiring on top of the seeded definitions.
+ * via the live service-container-resolved Configurator. The single
+ * loki-checkout option exposes Hyvä + Luma variants; this locks in
+ * the variant resolution and theme gating.
  */
 class LokiCheckoutTest extends TestCase
 {
-    public function test_hyva_theme_with_loki_hyva_pulls_in_loki_hyva_package(): void
+    public function test_hyva_theme_picks_hyva_variant_by_default(): void
     {
         $cfg = $this->app->make(Configurator::class);
         $sel = new Selection('2.2.2', null, [], [], [], ['loki-checkout-hyva'],
-            ['theme' => 'hyva', 'checkout' => 'loki-checkout-hyva'], [], []);
+            ['theme' => 'hyva', 'checkout' => 'loki-checkout'], [], [], []);
         $composer = $cfg->build($sel);
 
         $this->assertArrayHasKey('loki-checkout/magento2-hyva', $composer['require']);
@@ -27,48 +28,47 @@ class LokiCheckoutTest extends TestCase
         );
     }
 
-    public function test_luma_theme_with_loki_luma_and_lean_subtoggle(): void
+    public function test_luma_theme_falls_back_to_luma_variant_with_lean_subtoggle(): void
     {
         $cfg = $this->app->make(Configurator::class);
-        $sel = new Selection('2.2.2', null, [], [], [], ['loki-checkout-luma', 'loki-luma-components'],
-            ['theme' => 'luma', 'checkout' => 'loki-checkout-luma'], [],
-            ['checkout.loki-checkout-luma.luma-components']);
+        // Luma theme → hyva variant's requires fail → auto-fall back to luma variant.
+        $sel = new Selection(
+            '2.2.2', null, [], [], [], ['loki-checkout-luma', 'loki-luma-components'],
+            ['theme' => 'luma', 'checkout' => 'loki-checkout'], [],
+            ['checkout.loki-checkout.luma.luma-components'], []
+        );
         $composer = $cfg->build($sel);
 
         $this->assertArrayHasKey('loki-checkout/magento2-luma', $composer['require']);
         $this->assertArrayHasKey('loki-theme/magento2-luma-components', $composer['require']);
     }
 
-    public function test_luma_theme_with_loki_luma_lean_off(): void
+    public function test_luma_variant_lean_off(): void
     {
         $cfg = $this->app->make(Configurator::class);
-        $sel = new Selection('2.2.2', null, [], [], [], ['loki-checkout-luma'],
-            ['theme' => 'luma', 'checkout' => 'loki-checkout-luma'], [], []);
+        $sel = new Selection(
+            '2.2.2', null, [], [], [], ['loki-checkout-luma'],
+            ['theme' => 'luma', 'checkout' => 'loki-checkout'], [], [], []
+        );
         $composer = $cfg->build($sel);
 
         $this->assertArrayHasKey('loki-checkout/magento2-luma', $composer['require']);
         $this->assertArrayNotHasKey('loki-theme/magento2-luma-components', $composer['require']);
     }
 
-    public function test_loki_hyva_with_luma_theme_is_a_hard_invalid_combination_and_falls_back(): void
+    public function test_user_can_override_to_luma_variant_on_hyva_theme(): void
     {
         $cfg = $this->app->make(Configurator::class);
-        $sel = new Selection('2.2.2', null, [], [], [], [],
-            ['theme' => 'luma', 'checkout' => 'loki-checkout-hyva'], [], []);
+        // User explicitly picks luma variant on hyva theme — preferAlternative is
+        // a soft hint, not a block, so it stands.
+        $sel = new Selection(
+            '2.2.2', null, [], [], [], ['loki-checkout-luma'],
+            ['theme' => 'hyva', 'checkout' => 'loki-checkout'], [], [],
+            ['checkout.loki-checkout' => 'luma']
+        );
         $composer = $cfg->build($sel);
 
-        $this->assertArrayNotHasKey('loki-checkout/magento2-hyva', $composer['require'] ?? []);
-        $this->assertArrayNotHasKey('loki-checkout/magento2-luma', $composer['require'] ?? []);
-    }
-
-    public function test_loki_luma_with_hyva_theme_is_allowed_just_not_recommended(): void
-    {
-        $cfg = $this->app->make(Configurator::class);
-        $sel = new Selection('2.2.2', null, [], [], [], ['loki-checkout-luma'],
-            ['theme' => 'hyva', 'checkout' => 'loki-checkout-luma'], [], []);
-        $composer = $cfg->build($sel);
-
-        // recommends — not a hard requires — so the addon still goes in.
         $this->assertArrayHasKey('loki-checkout/magento2-luma', $composer['require']);
+        $this->assertArrayNotHasKey('loki-checkout/magento2-hyva', $composer['require']);
     }
 }

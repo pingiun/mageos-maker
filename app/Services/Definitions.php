@@ -194,6 +194,89 @@ class Definitions
     }
 
     /**
+     * Variants under a profile-group option. Each variant is option-shaped:
+     * `{name, label, requires?, preferAlternative?, enables?, subtoggles?}`.
+     * Returned keyed by variant name.
+     *
+     * @return array<string,array<string,mixed>>
+     */
+    public function optionVariants(string $group, string $option): array
+    {
+        $opt = $this->profileGroupOption($group, $option);
+        $out = [];
+        foreach ($opt['variants'] ?? [] as $v) {
+            $out[$v['name']] = $v;
+        }
+        return $out;
+    }
+
+    /**
+     * The variant that's currently active for an option, given the user's explicit
+     * pick (if any) and the profileGroups state. Resolution order:
+     *   1. user's explicit pick if its `requires` is met
+     *   2. the variant flagged with `default: true` if its `requires` is met
+     *   3. first variant whose `requires` is met
+     *   4. null if none qualify
+     *
+     * @param  array<string,string>  $profileGroups
+     * @param  array<string,string>  $userPicks  map "<group>.<option>" → variant name
+     */
+    public function optionActiveVariant(string $group, string $option, array $profileGroups, array $userPicks): ?string
+    {
+        $variants = $this->optionVariants($group, $option);
+        if ($variants === []) {
+            return null;
+        }
+        $variantMeets = function (string $vName) use ($variants, $profileGroups): bool {
+            $v = $variants[$vName] ?? null;
+            if ($v === null) {
+                return false;
+            }
+            foreach (($v['requires']['profileGroups'] ?? []) as $g => $expected) {
+                if (($profileGroups[$g] ?? null) !== $expected) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        $picked = $userPicks["$group.$option"] ?? null;
+        if ($picked !== null && $variantMeets($picked)) {
+            return $picked;
+        }
+        foreach ($variants as $name => $v) {
+            if (! empty($v['default']) && $variantMeets($name)) {
+                return $name;
+            }
+        }
+        foreach ($variants as $name => $_v) {
+            if ($variantMeets($name)) {
+                return $name;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * "<group>.<option>" keys for every option that declares variants.
+     * Used to seed Selection's optionVariants map at hydrate time.
+     *
+     * @return list<string>
+     */
+    public function allVariantOptionKeys(): array
+    {
+        $keys = [];
+        foreach ($this->profileGroups as $groupName => $group) {
+            foreach ($group['options'] ?? [] as $opt) {
+                if (! empty($opt['variants'])) {
+                    $keys[] = "$groupName.{$opt['name']}";
+                }
+            }
+        }
+        return $keys;
+    }
+
+    /**
      * "<group>.<option>.<sub>" keys for every option-subtoggle that defaults to ON.
      * Used to seed the Livewire component's enabledOptionSubtoggles list at hydrate time.
      *
@@ -207,6 +290,16 @@ class Definitions
                 foreach ($opt['subtoggles'] ?? [] as $sub) {
                     if (! empty($sub['default'])) {
                         $keys[] = "$groupName.{$opt['name']}.{$sub['name']}";
+                    }
+                }
+                // Variants can also declare default-on subtoggles. Use a 4-segment
+                // key (group.option.variant.sub) to disambiguate variants of the
+                // same option that happen to share a subtoggle name.
+                foreach ($opt['variants'] ?? [] as $variant) {
+                    foreach ($variant['subtoggles'] ?? [] as $sub) {
+                        if (! empty($sub['default'])) {
+                            $keys[] = "$groupName.{$opt['name']}.{$variant['name']}.{$sub['name']}";
+                        }
                     }
                 }
             }

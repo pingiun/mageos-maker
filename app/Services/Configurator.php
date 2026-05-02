@@ -226,6 +226,16 @@ class Configurator
                     continue;
                 }
                 $option = $this->defs->profileGroupOption($group, $defaultName) ?? [];
+                $optionName = $defaultName;
+            }
+            // If the option declares variants, the active variant carries the
+            // effects (enables/forces/etc.) — the parent option is just a label.
+            if (! empty($option['variants'])) {
+                $variantName = $this->defs->optionActiveVariant($group, $optionName, $selection->profileGroups, $selection->optionVariants);
+                if ($variantName === null) {
+                    continue;
+                }
+                $option = $this->defs->optionVariants($group, $optionName)[$variantName] ?? [];
             }
             $defaultAddons = array_merge($defaultAddons, $option['enables']['addons'] ?? []);
             $defaultLayers = array_merge($defaultLayers, $option['enables']['layers'] ?? []);
@@ -256,14 +266,40 @@ class Configurator
     {
         $out = [];
         foreach ($selection->enabledOptionSubtoggles as $key) {
-            [$group, $option, $sub] = array_pad(explode('.', $key, 3), 3, '');
-            if ($sub === '' || ($selection->profileGroups[$group] ?? null) !== $option) {
+            $parts = explode('.', $key);
+            if (count($parts) === 3) {
+                [$group, $option, $sub] = $parts;
+                $variant = null;
+            } elseif (count($parts) === 4) {
+                [$group, $option, $variant, $sub] = $parts;
+            } else {
+                continue;
+            }
+            if (($selection->profileGroups[$group] ?? null) !== $option) {
                 continue;
             }
             if (! $this->defs->optionMeetsRequires($group, $option, $selection->profileGroups)) {
                 continue;
             }
-            foreach ($this->defs->optionSubtoggleAddons($group, $option, $sub) as $addon) {
+            $optDef = $this->defs->profileGroupOption($group, $option) ?? [];
+            if (! empty($optDef['variants'])) {
+                if ($variant === null) {
+                    continue; // 3-segment key on a variant-bearing option is malformed
+                }
+                $activeVariant = $this->defs->optionActiveVariant($group, $option, $selection->profileGroups, $selection->optionVariants);
+                if ($activeVariant !== $variant) {
+                    continue;
+                }
+                $variantDef = $this->defs->optionVariants($group, $option)[$variant] ?? [];
+                $subDef = collect($variantDef['subtoggles'] ?? [])->firstWhere('name', $sub);
+                $addons = $subDef['addons'] ?? [];
+            } else {
+                if ($variant !== null) {
+                    continue; // 4-segment key on a non-variant option is malformed
+                }
+                $addons = $this->defs->optionSubtoggleAddons($group, $option, $sub);
+            }
+            foreach ($addons as $addon) {
                 $out[] = $addon;
             }
         }

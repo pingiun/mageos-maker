@@ -13,26 +13,30 @@ options:
         theme: hyva
     enables:
       addons: [hyva-checkout]
-  - name: loki-checkout-hyva
-    label: Loki Checkout (Hyvä)
-    requires:
-      profileGroups:
-        theme: hyva
-    enables:
-      addons: [loki-checkout-hyva]
-  - name: loki-checkout-luma
-    label: Loki Checkout (Luma)
-    preferAlternative:
-      when:
-        profileGroups:
-          theme: hyva
-      use: loki-checkout-hyva
-      reason: more performant on Hyvä
-    enables:
-      addons: [loki-checkout-luma]
-    subtoggles:
-      - name: luma-components
-        label: Strip unused Luma JS
-        description: Optional companion module
-        addons: [loki-luma-components]
+  - name: loki-checkout
+    label: Loki Checkout
+    variants:
+      - name: hyva
+        label: Hyvä variant
         default: true
+        requires:
+          profileGroups:
+            theme: hyva
+        enables:
+          addons: [loki-checkout-hyva]
+      - name: luma
+        label: Luma variant
+        preferAlternative:
+          when:
+            profileGroups:
+              theme: hyva
+          use: hyva
+          reason: more performant on Hyvä
+        enables:
+          addons: [loki-checkout-luma]
+        subtoggles:
+          - name: luma-components
+            label: Strip unused Luma JS
+            description: Optional companion module
+            addons: [loki-luma-components]
+            default: true
