@@ -44,6 +44,7 @@ class Configurator
             foreach ($this->defs->addonPackages($addon) as $pkg) {
                 $composer['require'][$pkg] = '*';
             }
+            $this->appendRepositories($composer, $this->defs->addonRepositories($addon));
         }
         // Non-stock layers that are enabled: append to require.
         foreach ($effectiveEnabledLayers as $layer) {
@@ -53,6 +54,7 @@ class Configurator
             foreach ($this->defs->layerPackages($layer) as $pkg) {
                 $composer['require'][$pkg] = '*';
             }
+            $this->appendRepositories($composer, $this->defs->layerRepositories($layer));
         }
         ksort($composer['require']);
 
@@ -118,6 +120,23 @@ class Configurator
     public function defaultedLayers(Selection $selection): array
     {
         return array_values(array_unique($this->resolveProfileGroups($selection)['defaultLayers']));
+    }
+
+    /**
+     * Merge addon/layer-declared repositories into the composer array, deduping
+     * against repositories already present (base mage-os repo, Hyvä, or earlier
+     * addons that declared the same one).
+     *
+     * @param  list<array<string,mixed>>  $repos
+     */
+    private function appendRepositories(array &$composer, array $repos): void
+    {
+        $composer['repositories'] ??= [];
+        foreach ($repos as $repo) {
+            if (! in_array($repo, $composer['repositories'], true)) {
+                $composer['repositories'][] = $repo;
+            }
+        }
     }
 
     /**
