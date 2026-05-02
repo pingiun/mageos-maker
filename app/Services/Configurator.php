@@ -278,6 +278,20 @@ class Configurator
 
         $composer['require'] ??= [];
 
+        // Merge in the allow-plugins required by Mage-OS / Magento composer plugins.
+        // Upstream project-community-edition currently ships no `config` block; we still
+        // merge defensively so we don't clobber it if that ever changes.
+        $allowPlugins = [
+            'php-http/discovery' => true,
+            'mage-os/composer-dependency-version-audit-plugin' => true,
+            'mage-os/composer-root-update-plugin' => true,
+            'mage-os/inventory-composer-installer' => true,
+            'dealerdirect/phpcodesniffer-composer-installer' => true,
+            'mage-os/magento-composer-installer' => true,
+        ];
+        $composer['config'] ??= [];
+        $composer['config']['allow-plugins'] = ($composer['config']['allow-plugins'] ?? []) + $allowPlugins;
+
         return $composer;
     }
 
