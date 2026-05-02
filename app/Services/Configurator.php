@@ -231,7 +231,7 @@ class Configurator
             // If the option declares variants, the active variant carries the
             // effects (enables/forces/etc.) — the parent option is just a label.
             if (! empty($option['variants'])) {
-                $variantName = $this->defs->optionActiveVariant($group, $optionName, $selection->profileGroups);
+                $variantName = $this->defs->optionActiveVariant($group, $optionName, $selection->profileGroups, $selection->optionVariants);
                 if ($variantName === null) {
                     continue;
                 }
@@ -286,7 +286,7 @@ class Configurator
                 if ($variant === null) {
                     continue; // 3-segment key on a variant-bearing option is malformed
                 }
-                $activeVariant = $this->defs->optionActiveVariant($group, $option, $selection->profileGroups);
+                $activeVariant = $this->defs->optionActiveVariant($group, $option, $selection->profileGroups, $selection->optionVariants);
                 if ($activeVariant !== $variant) {
                     continue;
                 }

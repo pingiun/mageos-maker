@@ -37,6 +37,14 @@ class Selection
          * @var list<string>
          */
         public readonly array $enabledOptionSubtoggles = [],
+        /**
+         * Per-option variant pick: ['<group>.<option>' => '<variantName>'].
+         * Resolution falls back to the option's declared default when no pick
+         * exists or when the picked variant's requires aren't met.
+         *
+         * @var array<string,string>
+         */
+        public readonly array $optionVariants = [],
     ) {}
 
     public static function default(string $version, Definitions $defs): self
@@ -59,6 +67,7 @@ class Selection
             profileGroups: $profileGroups,
             disabledSubtoggles: [],
             enabledOptionSubtoggles: $defs->defaultOnOptionSubtoggleKeys(),
+            optionVariants: [],
         );
 
         if ($self->profile !== null && isset($defs->profiles[$self->profile])) {
@@ -80,6 +89,7 @@ class Selection
             profileGroups: $data['profileGroups'] ?? [],
             disabledSubtoggles: array_values($data['disabledSubtoggles'] ?? []),
             enabledOptionSubtoggles: array_values($data['enabledOptionSubtoggles'] ?? $defs->defaultOnOptionSubtoggleKeys()),
+            optionVariants: $data['optionVariants'] ?? [],
         );
     }
 
@@ -95,6 +105,7 @@ class Selection
             'profileGroups' => $this->profileGroups,
             'disabledSubtoggles' => $this->disabledSubtoggles,
             'enabledOptionSubtoggles' => $this->enabledOptionSubtoggles,
+            'optionVariants' => $this->optionVariants,
         ];
     }
 
@@ -111,6 +122,7 @@ class Selection
             profileGroups: array_merge($this->profileGroups, $sel['profileGroups'] ?? []),
             disabledSubtoggles: array_values(array_unique(array_merge($this->disabledSubtoggles, $sel['disabledSubtoggles'] ?? []))),
             enabledOptionSubtoggles: array_values(array_unique(array_merge($this->enabledOptionSubtoggles, $sel['enabledOptionSubtoggles'] ?? []))),
+            optionVariants: array_merge($this->optionVariants, $sel['optionVariants'] ?? []),
         );
     }
 }

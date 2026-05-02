@@ -211,21 +211,21 @@ class Definitions
     }
 
     /**
-     * The variant that's currently active for an option, derived purely from the
-     * profileGroups state. Resolution order:
-     *   1. variant flagged with `default: true` if its `requires` is met
-     *   2. first variant whose `requires` is met
-     *   3. null if none qualify
+     * The variant that's currently active for an option. Resolution order:
+     *   1. user's explicit pick (from $userPicks) if its `requires` is met
+     *   2. variant flagged with `default: true` if its `requires` is met
+     *   3. first variant whose `requires` is met
+     *   4. null if none qualify
      *
-     * Variants are deliberately not user-pickable: a variant's identity is
-     * meaningful only as a function of the rest of the configuration (e.g.
-     * Loki Checkout's Hyvä variant only makes sense when theme=hyva). The
-     * UI shows which variant is active but doesn't expose it as a separate
-     * choice.
+     * The Livewire layer is expected to clear stale user picks when the
+     * profileGroups change (so picks don't survive a theme switch that
+     * would otherwise silently keep an inappropriate variant). This helper
+     * stays pure — it never mutates inputs.
      *
      * @param  array<string,string>  $profileGroups
+     * @param  array<string,string>  $userPicks  map "<group>.<option>" → variant name
      */
-    public function optionActiveVariant(string $group, string $option, array $profileGroups): ?string
+    public function optionActiveVariant(string $group, string $option, array $profileGroups, array $userPicks = []): ?string
     {
         $variants = $this->optionVariants($group, $option);
         if ($variants === []) {
@@ -240,6 +240,10 @@ class Definitions
             return true;
         };
 
+        $picked = $userPicks["$group.$option"] ?? null;
+        if ($picked !== null && isset($variants[$picked]) && $meets($variants[$picked])) {
+            return $picked;
+        }
         foreach ($variants as $name => $v) {
             if (! empty($v['default']) && $meets($v)) {
                 return $name;

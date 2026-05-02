@@ -69,30 +69,58 @@
                         </label>
                         @if ($isPicked && $available && ! empty($opt['variants']))
                             @php
-                                $activeVariant = $defsHelper->optionActiveVariant($groupName, $opt['name'], $profileGroups);
-                                $activeVariantDef = collect($opt['variants'])->firstWhere('name', $activeVariant);
+                                $activeVariant = $defsHelper->optionActiveVariant($groupName, $opt['name'], $profileGroups, $optionVariants);
                             @endphp
-                            @if ($activeVariantDef !== null)
-                                <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
-                                    <div style="font-size:11px;color:#888;margin-bottom:4px;">
-                                        Installing: <strong style="color:#555;">{{ $activeVariantDef['label'] }}</strong>
-                                        <span class="desc">(auto-selected from your theme)</span>
-                                    </div>
-                                    @foreach (($activeVariantDef['subtoggles'] ?? []) as $sub)
-                                        <label style="display:block;">
-                                            <input type="checkbox"
-                                                wire:model.live="enabledOptionSubtoggles"
-                                                value="{{ $groupName }}.{{ $opt['name'] }}.{{ $activeVariant }}.{{ $sub['name'] }}">
-                                            <span>
-                                                {{ $sub['label'] }}
-                                                @if (! empty($sub['description']))
-                                                    <span class="desc">{{ $sub['description'] }}</span>
-                                                @endif
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            @endif
+                            <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                                @foreach ($opt['variants'] as $variant)
+                                    @php
+                                        $vAvailable = true;
+                                        foreach (($variant['requires']['profileGroups'] ?? []) as $g => $needed) {
+                                            if (($profileGroups[$g] ?? null) !== $needed) {
+                                                $vAvailable = false;
+                                                break;
+                                            }
+                                        }
+                                        $vHint = '';
+                                        if (! $vAvailable) {
+                                            $reqs = [];
+                                            foreach (($variant['requires']['profileGroups'] ?? []) as $g => $needed) {
+                                                $reqOpt = collect($profileGroupDefs[$g]['options'] ?? [])->firstWhere('name', $needed);
+                                                $reqs[] = ($profileGroupDefs[$g]['label'] ?? $g).' = '.($reqOpt['label'] ?? $needed);
+                                            }
+                                            $vHint = '(needs '.implode(', ', $reqs).')';
+                                        }
+                                    @endphp
+                                    <label class="{{ $vAvailable ? '' : 'forced' }}" style="display:block;">
+                                        <input type="radio"
+                                            wire:model.live="optionVariants.{{ $groupName }}.{{ $opt['name'] }}"
+                                            value="{{ $variant['name'] }}"
+                                            @if ($activeVariant === $variant['name']) checked @endif
+                                            @disabled(! $vAvailable)>
+                                        {{ $variant['label'] }}
+                                        @if ($vHint !== '')
+                                            <span class="desc">{{ $vHint }}</span>
+                                        @endif
+                                    </label>
+                                    @if ($activeVariant === $variant['name'] && $vAvailable && ! empty($variant['subtoggles']))
+                                        <div style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                                            @foreach ($variant['subtoggles'] as $sub)
+                                                <label style="display:block;">
+                                                    <input type="checkbox"
+                                                        wire:model.live="enabledOptionSubtoggles"
+                                                        value="{{ $groupName }}.{{ $opt['name'] }}.{{ $variant['name'] }}.{{ $sub['name'] }}">
+                                                    <span>
+                                                        {{ $sub['label'] }}
+                                                        @if (! empty($sub['description']))
+                                                            <span class="desc">{{ $sub['description'] }}</span>
+                                                        @endif
+                                                    </span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
                         @elseif ($isPicked && $available && ! empty($opt['subtoggles']))
                             <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
                                 @foreach ($opt['subtoggles'] as $sub)
@@ -130,9 +158,14 @@
                 @foreach ($addonDefs as $name => $addon)
                     @php $isForced = in_array($name, $this->forcedAddons, true); @endphp
                     <label class="{{ $isForced ? 'forced' : '' }}">
-                        <input type="checkbox" wire:model.live="enabledAddons" value="{{ $name }}"
-                            @disabled($isForced)
-                            @if ($isForced) checked @endif>
+                        @if ($isForced)
+                            {{-- Forced addons render as a checked+disabled checkbox decoupled
+                                 from $enabledAddons; binding wire:model would let Livewire
+                                 overwrite the `checked` state on every render. --}}
+                            <input type="checkbox" disabled checked>
+                        @else
+                            <input type="checkbox" wire:model.live="enabledAddons" value="{{ $name }}">
+                        @endif
                         <span>
                             <strong>{{ $addon['label'] }}</strong>
                             @if ($isForced) <span class="pill">required</span> @endif
