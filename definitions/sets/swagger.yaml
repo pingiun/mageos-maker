@@ -1,0 +1,7 @@
+name: swagger
+label: Swagger API docs
+description: Swagger UI for the REST/Web API
+packages:
+  - mage-os/module-swagger
+  - mage-os/module-swagger-webapi
+  - mage-os/module-swagger-webapi-async
