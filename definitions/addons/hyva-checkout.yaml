@@ -1,5 +1,5 @@
 name: hyva-checkout
 label: Hyvä Checkout
-description: Hyvä Checkout React replacement (commercial)
+description: Hyvä Checkout built on Magewire (commercial)
 packages:
   - hyva-themes/magento2-hyva-checkout

@@ -107,7 +107,30 @@ class Configurator extends Component
             // should re-snap to the new theme's default rather than carry the
             // user's old override forward into a different context.
             $this->optionVariants = [];
+            $this->syncOptionVariants();
             $this->reapplySoftDefaults();
+        }
+    }
+
+    /**
+     * For every option that declares variants, write the resolved active variant
+     * back into $optionVariants. Without this, wire:model on the variant radios
+     * sees an empty entry and overrides the static `checked` attribute that
+     * marks the resolved default — so the radios render as if nothing is picked.
+     *
+     * Resolution prefers an existing user pick (when its requires is met), so
+     * calling this is idempotent for already-set keys and only fills in
+     * defaults for unset ones.
+     */
+    private function syncOptionVariants(): void
+    {
+        $defs = app(Definitions::class);
+        foreach ($defs->allVariantOptionKeys() as $key) {
+            [$group, $option] = explode('.', $key, 2);
+            $active = $defs->optionActiveVariant($group, $option, $this->profileGroups, $this->optionVariants);
+            if ($active !== null) {
+                $this->optionVariants[$key] = $active;
+            }
         }
     }
 
@@ -400,6 +423,7 @@ class Configurator extends Component
         $this->enabledSubtoggles = array_values(array_diff($defs->allSubtoggleKeys(), $sel->disabledSubtoggles));
         $this->enabledOptionSubtoggles = $sel->enabledOptionSubtoggles;
         $this->optionVariants = $sel->optionVariants;
+        $this->syncOptionVariants();
         // Apply soft defaults on top of the selection's explicit enabledAddons.
         $defaulted = $configurator->defaultedAddons($sel);
         $this->enabledAddons = array_values(array_unique(array_merge($sel->enabledAddons, $defaulted)));
