@@ -23,6 +23,11 @@
         .checkbox-list label { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; padding: 6px 8px; border-radius: 4px; cursor: pointer; }
         .checkbox-list label:hover { background: #f0f0f4; }
         .checkbox-list label .desc { display: block; font-size: 12px; color: #666; margin-top: 2px; }
+        /* Compact subtoggle rows — descriptions inline, smaller padding, smaller text. */
+        .subtoggles { margin-top: 4px; }
+        .subtoggles label { padding: 2px 4px; font-size: 13px; gap: 6px; }
+        .subtoggles label strong { font-weight: 500; }
+        .subtoggles label .desc { display: inline; font-size: 11px; color: #888; margin-top: 0; margin-left: 4px; }
         .radio-group { display: flex; flex-direction: column; gap: 6px; }
         .radio-group label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
         .radio-group label .desc { font-size: 11px; color: #888; font-weight: normal; margin-left: 4px; }

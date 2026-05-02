@@ -159,11 +159,12 @@
             <div class="checkbox-list" id="addon-list">
                 @foreach ($addonDefs as $name => $addon)
                     @php $isForced = in_array($name, $this->forcedAddons, true); @endphp
-                    <label class="{{ $isForced ? 'forced' : '' }}">
+                    {{-- wire:key includes $isForced so morphdom remounts the checkbox when its
+                         forced state flips; otherwise the DOM `checked` *property* lags behind
+                         the new attribute — same browser quirk that bit the variant radios. --}}
+                    <label class="{{ $isForced ? 'forced' : '' }}"
+                           wire:key="addon-{{ $name }}-{{ $isForced ? 'forced' : 'free' }}">
                         @if ($isForced)
-                            {{-- Forced addons render as a checked+disabled checkbox decoupled
-                                 from $enabledAddons; binding wire:model would let Livewire
-                                 overwrite the `checked` state on every render. --}}
                             <input type="checkbox" disabled checked>
                         @else
                             <input type="checkbox" wire:model.live="enabledAddons" value="{{ $name }}">
