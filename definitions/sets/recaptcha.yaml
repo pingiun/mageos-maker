@@ -1,0 +1,17 @@
+name: recaptcha
+label: Google reCAPTCHA
+description: Google reCAPTCHA v2/v3 protection across storefront and admin forms
+packages:
+  - mage-os/module-re-captcha-admin-ui
+  - mage-os/module-re-captcha-frontend-ui
+  - mage-os/module-re-captcha-migration
+  - mage-os/module-re-captcha-ui
+  - mage-os/module-re-captcha-validation
+  - mage-os/module-re-captcha-validation-api
+  - mage-os/module-re-captcha-version-2-checkbox
+  - mage-os/module-re-captcha-version-2-invisible
+  - mage-os/module-re-captcha-version-3-invisible
+  - mage-os/module-re-captcha-webapi-api
+  - mage-os/module-re-captcha-webapi-graph-ql
+  - mage-os/module-re-captcha-webapi-rest
+  - mage-os/module-re-captcha-webapi-ui

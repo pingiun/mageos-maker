@@ -1,0 +1,5 @@
+name: fedex
+label: FedEx shipping
+description: FedEx shipping carrier integration
+packages:
+  - mage-os/module-fedex

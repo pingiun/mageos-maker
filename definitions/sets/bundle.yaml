@@ -1,0 +1,8 @@
+name: bundle
+label: Bundle products
+description: Bundle ("build your own") product type
+packages:
+  - mage-os/module-bundle
+  - mage-os/module-bundle-graph-ql
+  - mage-os/module-bundle-import-export
+  - mage-os/module-quote-bundle-options

@@ -1,0 +1,8 @@
+name: grouped
+label: Grouped products
+description: Grouped product type (collection of simples on one PDP)
+packages:
+  - mage-os/module-grouped-product
+  - mage-os/module-grouped-product-graph-ql
+  - mage-os/module-grouped-import-export
+  - mage-os/module-grouped-catalog-inventory

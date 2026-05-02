@@ -1,0 +1,6 @@
+name: send-friend
+label: Send to friend
+description: Legacy "email a friend" product sharing feature
+packages:
+  - mage-os/module-send-friend
+  - mage-os/module-send-friend-graph-ql

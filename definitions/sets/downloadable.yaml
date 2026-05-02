@@ -1,0 +1,9 @@
+name: downloadable
+label: Downloadable products
+description: Digital downloadable product type
+packages:
+  - mage-os/module-downloadable
+  - mage-os/module-downloadable-graph-ql
+  - mage-os/module-downloadable-import-export
+  - mage-os/module-quote-downloadable-links
+  - mage-os/module-customer-downloadable-graph-ql

@@ -1,0 +1,16 @@
+name: message-queue
+label: Message queue / async APIs
+description: AMQP, STOMP, MySQL MQ and async webapi/bulk infrastructure
+packages:
+  - mage-os/module-message-queue
+  - mage-os/module-amqp
+  - mage-os/module-stomp
+  - mage-os/module-mysql-mq
+  - mage-os/module-async-config
+  - mage-os/module-asynchronous-operations
+  - mage-os/module-webapi-async
+  - mage-os/module-swagger-webapi-async
+  - mage-os/framework-amqp
+  - mage-os/framework-stomp
+  - mage-os/framework-message-queue
+  - mage-os/framework-bulk

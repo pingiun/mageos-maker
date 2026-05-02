@@ -1,0 +1,6 @@
+name: newsletter
+label: Newsletter
+description: Native newsletter subscription module
+packages:
+  - mage-os/module-newsletter
+  - mage-os/module-newsletter-graph-ql

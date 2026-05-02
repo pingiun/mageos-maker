@@ -1,0 +1,8 @@
+name: new-relic
+label: New Relic / APM
+description: New Relic reporting and application performance monitor modules
+packages:
+  - mage-os/module-new-relic-reporting
+  - mage-os/module-application-performance-monitor
+  - mage-os/module-application-performance-monitor-new-relic
+  - mage-os/module-graph-ql-new-relic

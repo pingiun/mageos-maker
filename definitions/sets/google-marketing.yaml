@@ -1,0 +1,8 @@
+name: google-marketing
+label: Google marketing integrations
+description: Google Ads, Analytics, gtag and Optimizer modules
+packages:
+  - mage-os/module-google-adwords
+  - mage-os/module-google-analytics
+  - mage-os/module-google-gtag
+  - mage-os/module-google-optimizer

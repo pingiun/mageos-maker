@@ -1,0 +1,7 @@
+name: order-cancellation
+label: Order cancellation
+description: Customer-initiated order cancellation flow
+packages:
+  - mage-os/module-order-cancellation
+  - mage-os/module-order-cancellation-graph-ql
+  - mage-os/module-order-cancellation-ui

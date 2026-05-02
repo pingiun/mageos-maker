@@ -1,0 +1,5 @@
+name: usps
+label: USPS shipping
+description: USPS shipping carrier integration
+packages:
+  - mage-os/module-usps

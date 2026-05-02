@@ -1,0 +1,5 @@
+name: marketplace
+label: Marketplace partners panel
+description: Admin "find partners and extensions" marketplace integration
+packages:
+  - mage-os/module-marketplace

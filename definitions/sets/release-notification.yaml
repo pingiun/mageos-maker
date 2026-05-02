@@ -1,0 +1,5 @@
+name: release-notification
+label: Release notifications
+description: Admin in-app release notification module
+packages:
+  - mage-os/module-release-notification

@@ -1,0 +1,5 @@
+name: instant-purchase
+label: Instant Purchase
+description: One-click purchase using stored payment and address
+packages:
+  - mage-os/module-instant-purchase

@@ -1,0 +1,19 @@
+name: page-builder
+label: Page Builder
+description: Drag-and-drop content builder for CMS, products and categories
+packages:
+  - mage-os/page-builder
+  - mage-os/module-page-builder
+  - mage-os/module-page-builder-image-attribute
+  - mage-os/module-cms-page-builder-analytics
+  - mage-os/module-catalog-page-builder-analytics
+  - mage-os/module-page-builder-admin-analytics
+  - mage-os/module-aws-s3-page-builder
+subtoggles:
+  - name: analytics
+    label: Page Builder analytics
+    description: Usage analytics for Page Builder content types
+    packages:
+      - mage-os/module-cms-page-builder-analytics
+      - mage-os/module-catalog-page-builder-analytics
+      - mage-os/module-page-builder-admin-analytics

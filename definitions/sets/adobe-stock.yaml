@@ -1,0 +1,13 @@
+name: adobe-stock
+label: Adobe Stock integration
+description: Admin Adobe Stock asset picker for the media gallery
+packages:
+  - mage-os/adobe-stock-integration
+  - mage-os/module-adobe-stock-admin-ui
+  - mage-os/module-adobe-stock-asset
+  - mage-os/module-adobe-stock-asset-api
+  - mage-os/module-adobe-stock-client
+  - mage-os/module-adobe-stock-client-api
+  - mage-os/module-adobe-stock-image
+  - mage-os/module-adobe-stock-image-admin-ui
+  - mage-os/module-adobe-stock-image-api

@@ -1,0 +1,7 @@
+name: reviews
+label: Product reviews
+description: Native customer product review module
+packages:
+  - mage-os/module-review
+  - mage-os/module-review-analytics
+  - mage-os/module-review-graph-ql

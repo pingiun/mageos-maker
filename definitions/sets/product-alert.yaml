@@ -1,0 +1,6 @@
+name: product-alert
+label: Product alerts
+description: Back-in-stock and price-drop email alerts
+packages:
+  - mage-os/module-product-alert
+  - mage-os/module-inventory-product-alert

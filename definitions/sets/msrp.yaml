@@ -1,0 +1,7 @@
+name: msrp
+label: MSRP (Minimum Advertised Price)
+description: MAP / "click for price" support across product types
+packages:
+  - mage-os/module-msrp
+  - mage-os/module-msrp-configurable-product
+  - mage-os/module-msrp-grouped-product
