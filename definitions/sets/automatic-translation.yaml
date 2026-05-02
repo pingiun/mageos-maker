@@ -1,5 +1,5 @@
 name: automatic-translation
 label: Automatic Translation
-description: Admin-side automatic content translation module (not yet shipped by Mage-OS as of 2.2.2; this toggle is forward-compatible — disabling adds it to replace, which is a no-op today)
+description: Admin-side automatic content translation module
 packages:
   - mage-os/module-automatic-translation
