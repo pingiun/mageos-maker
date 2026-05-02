@@ -1,8 +1,25 @@
 name: mageos-headless
 label: Mage-OS Headless
-description: Backend + GraphQL API only — no Luma storefront
+description: Backend + GraphQL API only — no Luma storefront, Luma-only features stripped
 selection:
-  disabledSets: [luma]
+  disabledSets:
+    - luma
+    - multishipping
+    - rss
+    - instant-purchase
+    - persistent-cart
+    - product-alert
+  disabledSubtoggles:
+    - recaptcha.checkout
+    - recaptcha.contact
+    - recaptcha.customer
+    - recaptcha.newsletter
+    - recaptcha.paypal
+    - recaptcha.review
+    - recaptcha.send-friend
+    - recaptcha.store-pickup
+    - recaptcha.wishlist
+    - page-builder.analytics
   disabledLayers: []
   enabledLayers: []
   enabledAddons: []
