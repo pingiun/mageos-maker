@@ -359,9 +359,8 @@
                     <li>
                         <span class="step-label">Activate the theme in Magento</span>
                         <div class="cmd-row"><pre class="cmd"><code>bin/magento setup:upgrade
-bin/magento config:set design/theme/theme_id $(bin/magento dev:theme:list 2>/dev/null | grep Hyva/default | awk '{print $1}')
 bin/magento cache:flush</code></pre><button type="button" class="cmd-copy" onclick="copyCmd(this)" aria-label="Copy">{!! $copyIcon !!}</button></div>
-                        <small>Or pick <code>Hyva/default</code> from <em>Content → Design → Configuration</em> in the admin.</small>
+                        <small>Then pick <code>Hyva/default</code> under <em>Content → Design → Configuration</em> in the admin and save.</small>
                     </li>
                     <li>
                         <span class="step-label">Disable the legacy Magento captcha</span>
