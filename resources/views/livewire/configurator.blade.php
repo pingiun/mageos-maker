@@ -181,36 +181,74 @@
 
         <div class="panel">
             <h2>Modules</h2>
-            <div class="checkbox-list">
+            <input type="text" id="modules-filter" placeholder="Filter modules…" autocomplete="off"
+                style="width:100%;padding:6px 8px;margin-bottom:8px;border:1px solid #ccc;border-radius:3px;font-size:12px;"
+                oninput="filterModules(this.value)">
+            <div class="checkbox-list" id="modules-list">
                 @foreach ($setDefs as $name => $set)
-                    @php $parentEnabled = in_array($name, $enabledSets, true); @endphp
-                    <label>
-                        <input type="checkbox" wire:model.live="enabledSets" value="{{ $name }}">
-                        <span>
-                            <strong>{{ $set['label'] }}</strong>
-                            <span class="desc">{{ $set['description'] ?? '' }}</span>
-                        </span>
-                    </label>
-                    @if (! empty($set['subtoggles']))
-                        <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
-                            @foreach ($set['subtoggles'] as $sub)
-                                <label class="{{ $parentEnabled ? '' : 'forced' }}" style="display:block;">
-                                    <input type="checkbox"
-                                        wire:model.live="enabledSubtoggles"
-                                        value="{{ $name }}.{{ $sub['name'] }}"
-                                        @disabled(! $parentEnabled)>
-                                    <span>
-                                        {{ $sub['label'] }}
-                                        @if (! empty($sub['description']))
-                                            <span class="desc">{{ $sub['description'] }}</span>
-                                        @endif
-                                    </span>
-                                </label>
-                            @endforeach
-                        </div>
-                    @endif
+                    @php
+                        $parentEnabled = in_array($name, $enabledSets, true);
+                        $haystack = strtolower(trim(
+                            $name.' '.($set['label'] ?? '').' '.($set['description'] ?? '').' '
+                            .collect($set['subtoggles'] ?? [])
+                                ->map(fn ($s) => ($s['label'] ?? '').' '.($s['description'] ?? ''))
+                                ->implode(' ')
+                        ));
+                    @endphp
+                    <div class="module-row" data-search="{{ $haystack }}">
+                        <label>
+                            <input type="checkbox" wire:model.live="enabledSets" value="{{ $name }}">
+                            <span>
+                                <strong>{{ $set['label'] }}</strong>
+                                <span class="desc">{{ $set['description'] ?? '' }}</span>
+                            </span>
+                        </label>
+                        @if (! empty($set['subtoggles']))
+                            <div class="subtoggles" style="margin-left:24px;border-left:2px solid #e5e5e5;padding-left:10px;">
+                                @foreach ($set['subtoggles'] as $sub)
+                                    <label class="{{ $parentEnabled ? '' : 'forced' }}" style="display:block;">
+                                        <input type="checkbox"
+                                            wire:model.live="enabledSubtoggles"
+                                            value="{{ $name }}.{{ $sub['name'] }}"
+                                            @disabled(! $parentEnabled)>
+                                        <span>
+                                            {{ $sub['label'] }}
+                                            @if (! empty($sub['description']))
+                                                <span class="desc">{{ $sub['description'] }}</span>
+                                            @endif
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 @endforeach
             </div>
+            <p id="modules-empty" style="display:none;font-size:12px;color:#888;margin:4px 0 0;">No modules match.</p>
+            <script>
+                function filterModules(q) {
+                    q = q.trim().toLowerCase();
+                    const list = document.getElementById('modules-list');
+                    if (!list) return;
+                    let visible = 0;
+                    list.querySelectorAll(':scope > .module-row').forEach(row => {
+                        const match = q === '' || (row.dataset.search || '').includes(q);
+                        row.style.display = match ? '' : 'none';
+                        if (match) visible++;
+                    });
+                    const empty = document.getElementById('modules-empty');
+                    if (empty) empty.style.display = visible === 0 ? '' : 'none';
+                }
+                // Re-apply filter after Livewire morphs the panel (e.g. toggling a module
+                // checkbox): inline display:none gets clobbered, so without this the list
+                // jumps back to "all visible" the moment you click anything.
+                document.addEventListener('livewire:init', () => {
+                    Livewire.hook('morph.updated', () => {
+                        const input = document.getElementById('modules-filter');
+                        if (input && input.value) filterModules(input.value);
+                    });
+                });
+            </script>
         </div>
 
         @if (count($languageDefs) > 0)
