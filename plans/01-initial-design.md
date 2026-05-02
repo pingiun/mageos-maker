@@ -76,9 +76,9 @@ name: wishlist
 label: Wishlist
 description: Customer wishlist functionality
 packages:
-  - magento/module-wishlist
-  - magento/module-wishlist-analytics
-  - magento/module-wishlist-graph-ql
+  - mage-os/module-wishlist
+  - mage-os/module-wishlist-analytics
+  - mage-os/module-wishlist-graph-ql
 ```
 
 `resources/definitions/profile-groups/theme.yaml`:
@@ -183,7 +183,7 @@ Layers: `graphql`, `hyva-compat`, `admin-graph-ql`.
 Profile groups: `theme` (luma default | hyva), `checkout` (default | hyva-checkout).
 Profiles: `mageos-full` (default, everything on), `mageos-lite` (essentials only), `mageos-framework` (no e-commerce).
 
-Exact package lists derived by inspecting `mage-os/project-community-edition`'s `composer.json` and grouping `magento/module-*` by feature area. Done as part of implementation, not exhaustive — easy to extend.
+Exact package lists derived by inspecting `mage-os/project-community-edition`'s `composer.json` and grouping `mage-os/module-*` by feature area. (Mage-OS replaces every legacy `magento/module-*` via the `replace` block on the corresponding `mage-os/module-*`, so the user's `replace: "*"` toggle must target the `mage-os/*` names — those are what's actually installed.) Done as part of implementation, not exhaustive — easy to extend.
 
 ## Out of scope for this plan (separate planning doc)
 
@@ -203,7 +203,7 @@ Exact package lists derived by inspecting `mage-os/project-community-edition`'s 
 ## Verification
 
 1. `composer install && php artisan migrate`.
-2. **CLI smoke test**: `bin/mageos-maker --disable=wishlist --profile=theme:hyva,checkout:hyva-checkout` → stdout shows `composer.json` with `mage-os/project-community-edition` in `require` and `magento/module-wishlist*` + Luma + magento-checkout packages in `replace`; Hyvä + hyva-checkout packages in `require`.
+2. **CLI smoke test**: `bin/mageos-maker --disable=wishlist --profile=theme:hyva,checkout:hyva-checkout` → stdout shows `composer.json` with `mage-os/project-community-edition` in `require` and `mage-os/module-wishlist*` + Luma + magento-checkout packages in `replace`; Hyvä + hyva-checkout packages in `require`.
 3. **Catalog update**: `php artisan mageos:catalog:update` → `storage/app/catalog.json` exists, contains a recent `mage-os/project-community-edition` version. Re-running CLI with no `--version` picks that version up.
 4. **Web flow**: `php artisan serve`, visit `/`, toggle wishlist + switch to Hyvä → preview pane updates and matches CLI output for the same selections. Click **Save** → redirected to `/c/{uuid}`; reopen URL in a new browser → selections + version restored exactly.
 5. **Snapshot durability**: bump catalog cache to a newer fake version, reload `/c/{uuid}` → still shows the originally-saved version (snapshot honored).
