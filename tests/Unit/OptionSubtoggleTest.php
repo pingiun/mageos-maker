@@ -43,7 +43,7 @@ class OptionSubtoggleTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
 
         // parent picked + subtoggle on (the default) → both addons in require
         $sel = new Selection('1.0.0', null, [], [], [], ['loki-luma'],

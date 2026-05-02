@@ -59,7 +59,7 @@ class OptionVariantTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
 
         $sel = new Selection('1.0.0', null, [], [], [], [],
             ['theme' => 'hyva', 'checkout' => 'loki'], [], []);
@@ -73,7 +73,7 @@ class OptionVariantTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
 
         $sel = new Selection('1.0.0', null, [], [], [], [],
             ['theme' => 'luma', 'checkout' => 'loki'], [],

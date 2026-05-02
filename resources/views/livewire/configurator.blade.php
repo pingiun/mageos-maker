@@ -306,10 +306,13 @@
                         <span class="step-label">Configure composer auth</span>
                         <pre class="cmd"><code>composer config --auth http-basic.hyva-themes.repo.packagist.com token {{ $token }}</code></pre>
                     </li>
-                    <li>
-                        <span class="step-label">Add the Hyvä private repository</span>
-                        <pre class="cmd"><code>composer config repositories.hyva-private composer https://hyva-themes.repo.packagist.com/{{ $project }}/</code></pre>
-                    </li>
+                    @if ($hyvaProject === '')
+                        <li>
+                            <span class="step-label">Add the Hyvä private repository</span>
+                            <pre class="cmd"><code>composer config repositories.hyva-private composer https://hyva-themes.repo.packagist.com/{{ $project }}/</code></pre>
+                            <small>Skip this once you've filled in the project name above — the repo will be baked into the generated <code>composer.json</code>.</small>
+                        </li>
+                    @endif
                     <li>
                         <span class="step-label">Install dependencies</span>
                         <pre class="cmd"><code>composer install</code></pre>
@@ -320,6 +323,11 @@
 bin/magento config:set design/theme/theme_id $(bin/magento dev:theme:list 2>/dev/null | grep Hyva/default | awk '{print $1}')
 bin/magento cache:flush</code></pre>
                         <small>Or pick <code>Hyva/default</code> from <em>Content → Design → Configuration</em> in the admin.</small>
+                    </li>
+                    <li>
+                        <span class="step-label">Disable the legacy Magento captcha</span>
+                        <pre class="cmd"><code>bin/magento config:set customer/captcha/enable 0</code></pre>
+                        <small>Hyvä doesn't support the legacy captcha; storefront forms break with it on. Swap in Google ReCaptcha (V2/V3) from the admin if you still want bot protection.</small>
                     </li>
                 </ol>
             </div>

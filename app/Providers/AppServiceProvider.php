@@ -2,10 +2,11 @@
 
 namespace App\Providers;
 
+use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
 use App\Services\Configurator;
-use App\Services\Definitions;
 use App\Services\DefinitionLoader;
+use App\Services\Definitions;
 use App\Services\GraphBaker;
 use App\Services\InstallTreeResolver;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(CatalogRepository::class, function ($app) {
             $config = $app['config']->get('mageos');
+
             return new CatalogRepository(
                 cacheDir: $config['cache_dir'],
                 catalogUrl: $config['catalog_url'],
@@ -26,14 +28,23 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(DefinitionLoader::class, function ($app) {
             $path = base_path($app['config']->get('mageos.definitions_path'));
+
             return new DefinitionLoader($path);
         });
 
         $this->app->singleton(Definitions::class, fn ($app) => $app->make(DefinitionLoader::class)->load());
 
+        $this->app->singleton(AddonVersionResolver::class, fn ($app) => new AddonVersionResolver(
+            $app->make(Definitions::class),
+            $app['config']->get('mageos.cache_dir'),
+            $app['config']->get('mageos.hyva_project'),
+            $app['config']->get('mageos.hyva_license_key'),
+        ));
+
         $this->app->singleton(Configurator::class, fn ($app) => new Configurator(
             $app->make(Definitions::class),
             $app->make(CatalogRepository::class),
+            $app->make(AddonVersionResolver::class),
             $app['config']->get('mageos.repository_url'),
         ));
 

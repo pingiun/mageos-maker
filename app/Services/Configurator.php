@@ -16,6 +16,7 @@ class Configurator
     public function __construct(
         private readonly Definitions $defs,
         private readonly CatalogRepository $catalog,
+        private readonly AddonVersionResolver $addonVersions,
         private readonly string $repositoryUrl,
     ) {}
 
@@ -43,10 +44,12 @@ class Configurator
             ];
         }
 
-        // Add-ons: append to require.
+        // Add-ons: append to require, pinning to the latest known version
+        // (resolved offline by mageos:catalog:update). Falls back to "*" when
+        // a package wasn't in the cached version map.
         foreach ($effectiveAddons as $addon) {
             foreach ($this->defs->addonPackages($addon) as $pkg) {
-                $composer['require'][$pkg] = '*';
+                $composer['require'][$pkg] = $this->addonVersions->constraint($pkg) ?? '*';
             }
             $this->appendRepositories($composer, $this->defs->addonRepositories($addon));
         }
@@ -56,7 +59,7 @@ class Configurator
                 continue;
             }
             foreach ($this->defs->layerPackages($layer) as $pkg) {
-                $composer['require'][$pkg] = '*';
+                $composer['require'][$pkg] = $this->addonVersions->constraint($pkg) ?? '*';
             }
             $this->appendRepositories($composer, $this->defs->layerRepositories($layer));
         }
@@ -310,6 +313,7 @@ class Configurator
                 $out[] = $addon;
             }
         }
+
         return $out;
     }
 }

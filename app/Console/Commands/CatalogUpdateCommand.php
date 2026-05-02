@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\AddonVersionResolver;
 use App\Services\CatalogRepository;
 use App\Services\GraphBaker;
 use Illuminate\Console\Command;
@@ -15,11 +16,18 @@ class CatalogUpdateCommand extends Command
 
     protected $description = 'Refresh the cached Mage-OS Composer manifest and pre-bake install-tree graphs';
 
-    public function handle(CatalogRepository $catalog, GraphBaker $baker): int
+    public function handle(CatalogRepository $catalog, GraphBaker $baker, AddonVersionResolver $addonVersions): int
     {
         if (! $this->option('bake-only')) {
             $changed = $catalog->refresh();
             $this->info($changed ? 'Catalog updated.' : 'Catalog already up to date (304).');
+
+            $result = $addonVersions->refresh();
+            $count = count($result['versions']);
+            $this->line("Resolved latest versions for $count add-on package(s).");
+            foreach ($result['warnings'] as $w) {
+                $this->warn("  warn: $w");
+            }
         }
 
         $latest = $catalog->latestStable();
@@ -45,6 +53,7 @@ class CatalogUpdateCommand extends Command
                 $result = $baker->bake($version, force: $force);
             } catch (\Throwable $e) {
                 $this->warn("  failed: {$e->getMessage()}");
+
                 continue;
             }
             $bakedAny = true;

@@ -51,7 +51,7 @@ class OptionRequiresTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
 
         $sel = new Selection('1.0.0', null, [], [], [], ['loki-hyva'],
             ['theme' => 'hyva', 'checkout' => 'loki-hyva'], [], []);
@@ -64,7 +64,7 @@ class OptionRequiresTest extends TestCase
         $defs = $this->defs();
         $catalog = $this->createMock(CatalogRepository::class);
         $catalog->method('packageVersions')->willReturn([]);
-        $cfg = new Configurator($defs, $catalog, 'https://example.com/');
+        $cfg = new Configurator($defs, $catalog, new \App\Services\AddonVersionResolver($defs, 'mageos-catalog', null, null), 'https://example.com/');
 
         // theme=luma but checkout claims loki-hyva — invalid combo. Configurator
         // treats checkout as if it were the group's default (no addons).

@@ -3,6 +3,3 @@ label: Hyvä Theme
 description: Hyvä storefront theme (free, requires a packagist token from hyva.io)
 packages:
   - hyva-themes/magento2-default-theme
-  - hyva-themes/magento2-theme-module
-  - hyva-themes/magento2-email-module
-  - hyva-themes/magento2-reset-theme

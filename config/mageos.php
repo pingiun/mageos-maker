@@ -20,4 +20,13 @@ return [
 
     // Fallback shipped with the tool, used when the catalog cache is empty.
     'fallback_version' => '2.2.2',
+
+    // Credentials for the Hyvä private composer repo, used by
+    // mageos:catalog:update to look up the latest hyva-themes/* versions:
+    //   - hyva_project: the URL slug from your Hyvä account dashboard
+    //     (https://hyva-themes.repo.packagist.com/<slug>/)
+    //   - hyva_license_key: the HTTP basic-auth password (paired with the
+    //     literal username "token") — i.e. the value you'd put in auth.json.
+    'hyva_project' => env('MAGEOS_HYVA_PROJECT'),
+    'hyva_license_key' => env('MAGEOS_HYVA_LICENSE_KEY'),
 ];
