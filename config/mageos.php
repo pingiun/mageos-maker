@@ -14,7 +14,7 @@ return [
     'cache_dir' => 'mageos-catalog',
 
     // Where YAML definitions live (relative to base_path()).
-    'definitions_path' => 'resources/definitions',
+    'definitions_path' => 'definitions',
 
     // Fallback shipped with the tool, used when the catalog cache is empty.
     'fallback_version' => '2.2.2',
