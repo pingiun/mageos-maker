@@ -31,6 +31,5 @@ options:
         subtoggles:
           - name: luma-components
             label: Strip unused Luma JS
-            description: Optional companion module
             addons: [loki-luma-components]
             default: true

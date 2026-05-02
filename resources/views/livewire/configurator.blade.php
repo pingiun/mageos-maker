@@ -91,7 +91,8 @@
                                             $vHint = '(needs '.implode(', ', $reqs).')';
                                         }
                                     @endphp
-                                    <label class="{{ $vAvailable ? '' : 'forced' }}" style="display:block;">
+                                    <label class="{{ $vAvailable ? '' : 'forced' }}" style="display:block;"
+                                           wire:key="variant-{{ $groupName }}-{{ $opt['name'] }}-{{ $variant['name'] }}-active{{ $activeVariant }}">
                                         <input type="radio"
                                             name="variant-{{ $groupName }}-{{ $opt['name'] }}"
                                             wire:click="setOptionVariant('{{ $groupName }}', '{{ $opt['name'] }}', '{{ $variant['name'] }}')"
