@@ -70,10 +70,15 @@
         const newLines = newStr.split('\n');
         const m = oldLines.length, n = newLines.length;
         if (m === 0 || n === 0) return new Set(newLines.map((_, i) => i));
+        // A trailing comma flips on the previous line whenever a new entry is
+        // inserted after it (or off when the entry is removed). Treat that as
+        // unchanged so only the actually-added/removed line lights up.
+        const normOld = oldLines.map(l => l.replace(/,(\s*)$/, '$1'));
+        const normNew = newLines.map(l => l.replace(/,(\s*)$/, '$1'));
         const lcs = Array.from({length: m + 1}, () => new Uint16Array(n + 1));
         for (let i = 1; i <= m; i++) {
             for (let j = 1; j <= n; j++) {
-                lcs[i][j] = oldLines[i-1] === newLines[j-1]
+                lcs[i][j] = normOld[i-1] === normNew[j-1]
                     ? lcs[i-1][j-1] + 1
                     : Math.max(lcs[i-1][j], lcs[i][j-1]);
             }
@@ -81,7 +86,7 @@
         const changed = new Set();
         let i = m, j = n;
         while (i > 0 && j > 0) {
-            if (oldLines[i-1] === newLines[j-1]) { i--; j--; }
+            if (normOld[i-1] === normNew[j-1]) { i--; j--; }
             else if (lcs[i-1][j] >= lcs[i][j-1]) { i--; }
             else { changed.add(j - 1); j--; }
         }
