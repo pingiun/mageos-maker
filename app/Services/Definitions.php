@@ -139,26 +139,37 @@ class Definitions
     }
 
     /**
-     * Soft variant of {@see optionMeetsRequires}. `recommends.profileGroups`
-     * doesn't gate availability — it only drives a UI hint when the user picks
-     * the option in a non-recommended state. Returns true if no recommends
-     * block, or if the recommends are met.
+     * Soft suggestion: when the current selection matches the option's
+     * `preferAlternative.when` block, the UI should hint that a different
+     * option in the same group is the better fit. Doesn't gate availability.
+     *
+     * Schema:
+     *   preferAlternative:
+     *     when:
+     *       profileGroups: { theme: hyva }
+     *     use: loki-checkout-hyva
+     *     reason: more performant on Hyvä   # optional
      *
      * @param  array<string,string>  $profileGroups
+     * @return array{use:string,reason?:string}|null
      */
-    public function optionMeetsRecommends(string $group, string $option, array $profileGroups): bool
+    public function optionPreferAlternative(string $group, string $option, array $profileGroups): ?array
     {
         $opt = $this->profileGroupOption($group, $option);
-        if ($opt === null) {
-            return true;
+        $pref = $opt['preferAlternative'] ?? null;
+        if (! is_array($pref) || ! isset($pref['use'])) {
+            return null;
         }
-        $rec = $opt['recommends']['profileGroups'] ?? [];
-        foreach ($rec as $g => $expected) {
+        $when = $pref['when']['profileGroups'] ?? [];
+        if ($when === []) {
+            return null;
+        }
+        foreach ($when as $g => $expected) {
             if (($profileGroups[$g] ?? null) !== $expected) {
-                return false;
+                return null;
             }
         }
-        return true;
+        return ['use' => $pref['use']] + (isset($pref['reason']) ? ['reason' => $pref['reason']] : []);
     }
 
     /**

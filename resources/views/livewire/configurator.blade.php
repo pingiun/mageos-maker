@@ -39,7 +39,7 @@
                         @php
                             $defsHelper = app(\App\Services\Definitions::class);
                             $available = $defsHelper->optionMeetsRequires($groupName, $opt['name'], $profileGroups);
-                            $recommended = $defsHelper->optionMeetsRecommends($groupName, $opt['name'], $profileGroups);
+                            $prefer = $defsHelper->optionPreferAlternative($groupName, $opt['name'], $profileGroups);
                             $isPicked = ($profileGroups[$groupName] ?? null) === $opt['name'];
                             $hint = '';
                             if (! $available) {
@@ -49,13 +49,12 @@
                                     $reqs[] = ($profileGroupDefs[$g]['label'] ?? $g).' = '.($reqOpt['label'] ?? $needed);
                                 }
                                 $hint = '(needs '.implode(', ', $reqs).')';
-                            } elseif (! $recommended) {
-                                $recs = [];
-                                foreach (($opt['recommends']['profileGroups'] ?? []) as $g => $needed) {
-                                    $recOpt = collect($profileGroupDefs[$g]['options'] ?? [])->firstWhere('name', $needed);
-                                    $recs[] = ($profileGroupDefs[$g]['label'] ?? $g).' = '.($recOpt['label'] ?? $needed);
-                                }
-                                $hint = '(recommended with '.implode(', ', $recs).')';
+                            } elseif ($prefer !== null) {
+                                $altOpt = collect($group['options'] ?? [])->firstWhere('name', $prefer['use']);
+                                $altLabel = $altOpt['label'] ?? $prefer['use'];
+                                $hint = isset($prefer['reason'])
+                                    ? "(prefer {$altLabel} — {$prefer['reason']})"
+                                    : "(prefer {$altLabel})";
                             }
                         @endphp
                         <label class="{{ $available ? '' : 'forced' }}">

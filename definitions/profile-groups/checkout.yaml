@@ -22,9 +22,12 @@ options:
       addons: [loki-checkout-hyva]
   - name: loki-checkout-luma
     label: Loki Checkout (Luma)
-    recommends:
-      profileGroups:
-        theme: luma
+    preferAlternative:
+      when:
+        profileGroups:
+          theme: hyva
+      use: loki-checkout-hyva
+      reason: more performant on Hyvä
     enables:
       addons: [loki-checkout-luma]
     subtoggles:
