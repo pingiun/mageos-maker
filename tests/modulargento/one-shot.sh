@@ -237,7 +237,16 @@ if [[ ${#app_code_overlays[@]} -gt 0 ]]; then
       fi
       rm -rf "$sandbox/app/code/Magento/$mod"
       cp -R "$src/$mod" "$sandbox/app/code/Magento/$mod"
-      echo "  overlaid Magento/$mod from $src" >> "$log"
+      # Magento errors on duplicate module definitions (it doesn't shadow
+      # vendor with app/code). Drop the vendor copy if one exists.
+      kebab="$(printf '%s' "$mod" | sed -E 's/([a-z0-9])([A-Z])/\1-\2/g; s/([A-Z])([A-Z][a-z])/\1-\2/g' | tr '[:upper:]' '[:lower:]')"
+      vendor_dir="$sandbox/vendor/mage-os/module-$kebab"
+      if [[ -d "$vendor_dir" ]]; then
+        rm -rf "$vendor_dir"
+        echo "  overlaid Magento/$mod from $src (replaced vendor/mage-os/module-$kebab)" >> "$log"
+      else
+        echo "  overlaid Magento/$mod from $src (no vendor copy — likely a new bridge module)" >> "$log"
+      fi
     done
   done
   if [[ $overlay_failed -ne 0 ]]; then
