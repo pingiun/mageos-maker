@@ -192,6 +192,9 @@ PY
     emit_json "configure-failed" "patch-merge-failed" "$diff_flag" "configure"
     exit 0
   fi
+  # Mutating composer.json invalidates any composer.lock left behind by a
+  # prior run — drop it so the next `composer install` re-resolves.
+  rm -f "$sandbox/composer.lock"
 fi
 
 # 3. Carry an auth.json into the sandbox if the project has one.
