@@ -9,6 +9,8 @@ packages:
   - mage-os/module-catalog-page-builder-analytics
   - mage-os/module-page-builder-admin-analytics
   - mage-os/module-aws-s3-page-builder
+  - mage-os/module-page-builder-template-import-export
+  - mage-os/module-page-builder-widget
 subtoggles:
   - name: analytics
     label: Page Builder analytics
