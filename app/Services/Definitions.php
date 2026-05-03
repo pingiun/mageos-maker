@@ -182,8 +182,8 @@ class Definitions
      */
     /**
      * Whether a set may be disabled by the user. Sets with `removable: false`
-     * are forced on — currently used for sets the Modulargento removal matrix
-     * proved cannot be cleanly cut out of stock Mage-OS without a patch module.
+     * are forced on — used for sets that have hard cross-module dependencies
+     * in stock Mage-OS and break di:compile / setup:install when removed.
      * Defaults to true when the YAML omits the flag.
      */
     public function isSetRemovable(string $name): bool

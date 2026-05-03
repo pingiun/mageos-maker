@@ -202,7 +202,7 @@
                             <span>
                                 <strong>{{ $set['label'] }}</strong>
                                 @unless ($removable)
-                                    <span class="pill" title="Removing this set breaks stock Mage-OS at di:compile or setup:install. The Modulargento project provides patch modules to make it removable.">Modulargento</span>
+                                    <span class="pill" title="This module has hard cross-module dependencies in stock Mage-OS and can't be removed without breaking di:compile or setup:install.">required</span>
                                 @endunless
                                 <span class="desc">{{ $set['description'] ?? '' }}</span>
                             </span>

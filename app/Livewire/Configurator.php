@@ -334,8 +334,8 @@ class Configurator extends Component
         $allSubtoggles = $defs->allSubtoggleKeys();
 
         // Sets marked `removable: false` are force-enabled regardless of UI state —
-        // they're known to break di:compile / setup:install when removed without a
-        // Modulargento patch. They never enter disabledSets.
+        // they're known to break di:compile / setup:install when removed.
+        // They never enter disabledSets.
         $nonRemovable = array_values(array_filter($allSetNames, fn ($n) => ! $defs->isSetRemovable($n)));
         $disabled = array_values(array_diff($allSetNames, $this->enabledSets, $nonRemovable));
 
