@@ -131,7 +131,15 @@ if ! ( cd "$sandbox" && timeout "$INSTALL_TIMEOUT" composer install --no-interac
   exit 0
 fi
 
-# 5. setup:install — Magento needs app/etc/config.php before di:compile will run.
+# 5. Ensure the per-sandbox database exists (setup:install does not create it).
+echo "--- create database $db_name ---" >> "$log"
+if ! MYSQL_PWD="$DB_PASSWORD" mysql -h "$DB_HOST" -u "$DB_USER" \
+    -e "CREATE DATABASE IF NOT EXISTS \`$db_name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" >> "$log" 2>&1; then
+  emit_json "install-failed" "mysql-create-database-failed" "$diff_flag" "install"
+  exit 0
+fi
+
+# 6. setup:install — Magento needs app/etc/config.php before di:compile will run.
 echo "--- setup:install (db=$db_name, os-prefix=$os_prefix) ---" >> "$log"
 setup_status=0
 ( cd "$sandbox" && timeout "$SETUP_TIMEOUT" bin/magento setup:install \
