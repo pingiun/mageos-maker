@@ -39,7 +39,7 @@ if ($baseline) {
 }
 
 $counts = [];
-foreach (['pass','fail','noop','composer-failed','timeout','configure-failed','harness-error','unknown'] as $s) {
+foreach (['pass','fail','noop','composer-failed','install-failed','timeout','configure-failed','harness-error','unknown'] as $s) {
     $counts[$s] = count($by_status[$s] ?? []);
 }
 echo "Totals: ";
@@ -81,7 +81,7 @@ if (!empty($by_status['fail'])) {
     }
 }
 
-foreach (['composer-failed','timeout','configure-failed','harness-error'] as $bucket) {
+foreach (['composer-failed','install-failed','timeout','configure-failed','harness-error'] as $bucket) {
     if (empty($by_status[$bucket])) continue;
     echo "## $bucket (" . count($by_status[$bucket]) . " sets)\n\n";
     foreach ($by_status[$bucket] as $r) {

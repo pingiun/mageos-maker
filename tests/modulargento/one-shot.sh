@@ -11,7 +11,14 @@
 #   PROFILE               starter profile name (default: mageos-full)
 #   COMPOSER_CACHE_DIR    shared Composer cache (default: ~/.cache/composer)
 #   COMPILE_TIMEOUT       seconds (default: 600)
-#   INSTALL_TIMEOUT       seconds (default: 1800)
+#   INSTALL_TIMEOUT       seconds (default: 1800)  # composer install
+#   SETUP_TIMEOUT         seconds (default: 1800)  # bin/magento setup:install
+#
+#   DB_HOST/DB_USER/DB_PASSWORD          (defaults: 127.0.0.1 / root / "")
+#   DB_NAME_PREFIX                        (default: mageos_) — db is "<prefix><sanitized-set>"
+#   OPENSEARCH_HOST/OPENSEARCH_PORT      (defaults: 127.0.0.1 / 9200)
+#   REDIS_HOST/REDIS_PORT                 (defaults: 127.0.0.1 / 6379)
+#   AMQP_HOST/AMQP_PORT/AMQP_USER/AMQP_PASSWORD  (defaults: 127.0.0.1 / 5672 / guest / guest)
 
 set -u
 set -o pipefail
@@ -25,6 +32,25 @@ PROFILE="${PROFILE:-mageos-full}"
 COMPOSER_CACHE_DIR="${COMPOSER_CACHE_DIR:-$HOME/.cache/composer}"
 COMPILE_TIMEOUT="${COMPILE_TIMEOUT:-600}"
 INSTALL_TIMEOUT="${INSTALL_TIMEOUT:-1800}"
+SETUP_TIMEOUT="${SETUP_TIMEOUT:-1800}"
+
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_USER="${DB_USER:-root}"
+DB_PASSWORD="${DB_PASSWORD:-}"
+DB_NAME_PREFIX="${DB_NAME_PREFIX:-mageos_}"
+OPENSEARCH_HOST="${OPENSEARCH_HOST:-127.0.0.1}"
+OPENSEARCH_PORT="${OPENSEARCH_PORT:-9200}"
+REDIS_HOST="${REDIS_HOST:-127.0.0.1}"
+REDIS_PORT="${REDIS_PORT:-6379}"
+AMQP_HOST="${AMQP_HOST:-127.0.0.1}"
+AMQP_PORT="${AMQP_PORT:-5672}"
+AMQP_USER="${AMQP_USER:-guest}"
+AMQP_PASSWORD="${AMQP_PASSWORD:-guest}"
+
+# Sanitize set name for MySQL identifier / OpenSearch prefix (alnum + underscore).
+sanitized="$(printf '%s' "$set_name" | tr -c 'A-Za-z0-9_' '_' | sed 's/^_*//' | head -c 48)"
+db_name="${DB_NAME_PREFIX}${sanitized}"
+os_prefix="mageos_${sanitized}"
 
 results_dir="$script_dir/results"
 raw_dir="$results_dir/raw"
@@ -105,7 +131,68 @@ if ! ( cd "$sandbox" && timeout "$INSTALL_TIMEOUT" composer install --no-interac
   exit 0
 fi
 
-# 5. setup:di:compile.
+# 5. setup:install — Magento needs app/etc/config.php before di:compile will run.
+echo "--- setup:install (db=$db_name, os-prefix=$os_prefix) ---" >> "$log"
+setup_status=0
+( cd "$sandbox" && timeout "$SETUP_TIMEOUT" bin/magento setup:install \
+    --base-url=http://localhost:8080/ \
+    --db-host="$DB_HOST" \
+    --db-name="$db_name" \
+    --db-user="$DB_USER" \
+    --db-password="$DB_PASSWORD" \
+    --cleanup-database \
+    --admin-firstname=Admin \
+    --admin-lastname=User \
+    --admin-email=admin@example.com \
+    --admin-user=admin \
+    --admin-password='Admin123!' \
+    --language=en_US \
+    --currency=EUR \
+    --timezone=Europe/Amsterdam \
+    --use-rewrites=1 \
+    --search-engine=opensearch \
+    --opensearch-host="$OPENSEARCH_HOST" \
+    --opensearch-port="$OPENSEARCH_PORT" \
+    --opensearch-index-prefix="$os_prefix" \
+    --opensearch-enable-auth=0 \
+    --session-save=redis \
+    --session-save-redis-host="$REDIS_HOST" \
+    --session-save-redis-port="$REDIS_PORT" \
+    --session-save-redis-db=2 \
+    --cache-backend=redis \
+    --cache-backend-redis-server="$REDIS_HOST" \
+    --cache-backend-redis-port="$REDIS_PORT" \
+    --cache-backend-redis-db=0 \
+    --page-cache=redis \
+    --page-cache-redis-server="$REDIS_HOST" \
+    --page-cache-redis-port="$REDIS_PORT" \
+    --page-cache-redis-db=1 ) >> "$log" 2>&1 || setup_status=$?
+
+if [[ "$setup_status" -ne 0 ]]; then
+  if [[ "$setup_status" -eq 124 ]]; then
+    emit_json "timeout" "setup-install-timeout-${SETUP_TIMEOUT}s" "$diff_flag" "install"
+    exit 0
+  fi
+  fp=""
+  while IFS= read -r pat; do
+    [[ -z "$pat" ]] && continue
+    hit="$(grep -m1 -oE "$pat" "$log" || true)"
+    if [[ -n "$hit" ]]; then fp="$hit"; break; fi
+  done <<'PATTERNS'
+Class "[^"]+" does not exist
+Source class "[^"]+" for "[^"]+" generation does not exist
+Plugin class '[^']+'[^']*doesn't exist
+Preference '[^']+' for '[^']+'
+PATTERNS
+  if [[ -z "$fp" ]]; then
+    fp="$(tail -n 5 "$log" | tr '\n' ' ' | tr -s ' ' | head -c 240)"
+    [[ -z "$fp" ]] && fp="setup-install-failed"
+  fi
+  emit_json "install-failed" "$fp" "$diff_flag" "install"
+  exit 0
+fi
+
+# 6. setup:di:compile.
 echo "--- setup:di:compile ---" >> "$log"
 compile_status=0
 ( cd "$sandbox" && timeout "$COMPILE_TIMEOUT" bin/magento setup:di:compile ) >> "$log" 2>&1 || compile_status=$?
@@ -120,7 +207,7 @@ if [[ "$compile_status" -eq 124 ]]; then
   exit 0
 fi
 
-# 6. Fingerprint — first match wins.
+# 7. Fingerprint — first match wins.
 fp=""
 while IFS= read -r pat; do
   [[ -z "$pat" ]] && continue
