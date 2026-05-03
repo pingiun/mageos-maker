@@ -282,10 +282,14 @@
                         $isForced = in_array($name, $this->forcedLayers, true);
                     @endphp
                     @if ($isStock)
-                        <label>
-                            <input type="checkbox" wire:model.live="enabledStockLayers" value="{{ $name }}">
+                        @php $removable = $layerRemovable[$name] ?? true; @endphp
+                        <label class="{{ $removable ? '' : 'forced' }}">
+                            <input type="checkbox" wire:model.live="enabledStockLayers" value="{{ $name }}" @disabled(! $removable)>
                             <span>
                                 <strong>{{ $layer['label'] }}</strong>
+                                @unless ($removable)
+                                    <span class="pill" title="This layer is wired into stock Mage-OS bootstrap and can't be removed without breaking the install.">required</span>
+                                @endunless
                                 <span class="desc">{{ $layer['description'] ?? '' }}</span>
                             </span>
                         </label>

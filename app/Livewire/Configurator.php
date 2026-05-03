@@ -333,17 +333,19 @@ class Configurator extends Component
 
         $allSubtoggles = $defs->allSubtoggleKeys();
 
-        // Sets marked `removable: false` are force-enabled regardless of UI state —
-        // they're known to break di:compile / setup:install when removed.
-        // They never enter disabledSets.
-        $nonRemovable = array_values(array_filter($allSetNames, fn ($n) => ! $defs->isSetRemovable($n)));
-        $disabled = array_values(array_diff($allSetNames, $this->enabledSets, $nonRemovable));
+        // Sets / stock layers marked `removable: false` are force-enabled regardless
+        // of UI state — they're known to break di:compile / setup:install when
+        // removed. They never enter disabledSets / disabledLayers.
+        $nonRemovableSets = array_values(array_filter($allSetNames, fn ($n) => ! $defs->isSetRemovable($n)));
+        $disabled = array_values(array_diff($allSetNames, $this->enabledSets, $nonRemovableSets));
+        $nonRemovableLayers = array_values(array_filter($stockLayerNames, fn ($n) => ! $defs->isLayerRemovable($n)));
+        $disabledLayers = array_values(array_diff($stockLayerNames, $this->enabledStockLayers, $nonRemovableLayers));
 
         return new Selection(
             version: $this->version ?? '',
             profile: $this->profile,
             disabledSets: $disabled,
-            disabledLayers: array_values(array_diff($stockLayerNames, $this->enabledStockLayers)),
+            disabledLayers: $disabledLayers,
             enabledLayers: [],
             enabledAddons: $this->enabledAddons,
             profileGroups: $this->profileGroups,
@@ -437,7 +439,11 @@ class Configurator extends Component
             fn ($n) => $defs->isSetRemovable($n),
         ));
         $this->enabledSets = array_values(array_diff($allSets, $effectiveDisabled));
-        $this->enabledStockLayers = array_values(array_diff($stockLayers, $sel->disabledLayers));
+        $effectiveDisabledLayers = array_values(array_filter(
+            $sel->disabledLayers,
+            fn ($n) => $defs->isLayerRemovable($n),
+        ));
+        $this->enabledStockLayers = array_values(array_diff($stockLayers, $effectiveDisabledLayers));
         $this->profileGroups = $sel->profileGroups;
         $this->enabledSubtoggles = array_values(array_diff($defs->allSubtoggleKeys(), $sel->disabledSubtoggles));
         $this->enabledOptionSubtoggles = $sel->enabledOptionSubtoggles;
@@ -468,11 +474,16 @@ class Configurator extends Component
         foreach (array_keys($defs->sets) as $name) {
             $setRemovable[$name] = $defs->isSetRemovable($name);
         }
+        $layerRemovable = [];
+        foreach (array_keys($defs->layers) as $name) {
+            $layerRemovable[$name] = $defs->isLayerRemovable($name);
+        }
 
         return view('livewire.configurator', [
             'setDefs' => $modules,
             'languageDefs' => $languages,
             'setRemovable' => $setRemovable,
+            'layerRemovable' => $layerRemovable,
             'layerDefs' => $defs->layers,
             'addonDefs' => $defs->addons,
             'profileDefs' => $defs->profiles,

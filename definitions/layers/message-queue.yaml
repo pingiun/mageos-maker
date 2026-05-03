@@ -1,6 +1,7 @@
 name: message-queue
 label: Message queue / async APIs
 description: AMQP, STOMP, MySQL MQ and async webapi/bulk infrastructure
+removable: false  # framework-message-queue is wired into stock Mage-OS bootstrap
 packages:
   - mage-os/module-message-queue
   - mage-os/module-amqp

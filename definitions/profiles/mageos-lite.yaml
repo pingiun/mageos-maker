@@ -36,7 +36,6 @@ selection:
     - weee
   disabledLayers:
     - graphql
-    - message-queue
   enabledLayers: []
   enabledAddons: []
   profileGroups:

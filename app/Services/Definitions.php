@@ -201,6 +201,21 @@ class Definitions
             : ($this->layers[$name]['stock'] ?? true) !== false;
     }
 
+    /**
+     * Whether a stock layer may be disabled by the user. Layers with
+     * `removable: false` are forced on (e.g. message-queue, whose framework
+     * package is wired into stock Mage-OS bootstrap). Defaults to true.
+     * Only meaningful for stock layers — non-stock layers are profile-group
+     * driven and never user-toggled in the first place.
+     */
+    public function isLayerRemovable(string $name): bool
+    {
+        if (! array_key_exists($name, $this->layers)) {
+            return true;
+        }
+        return ($this->layers[$name]['removable'] ?? true) !== false;
+    }
+
     public function profileGroupOption(string $group, string $option): ?array
     {
         foreach ($this->profileGroups[$group]['options'] ?? [] as $opt) {
