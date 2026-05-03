@@ -1,0 +1,438 @@
+{
+  "profile": "mageos-full",
+  "version": "",
+  "results": [
+    {
+      "set": "_baseline",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/_baseline.log",
+      "duration_s": 116,
+      "composer_diff_baseline": "unknown",
+      "phase": "compile"
+    },
+    {
+      "set": "admin-analytics",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/admin-analytics.log",
+      "duration_s": 158,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "admin-theme-m137",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/admin-theme-m137.log",
+      "duration_s": 158,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "adobe-stock",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/adobe-stock.log",
+      "duration_s": 159,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "automatic-translation",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/automatic-translation.log",
+      "duration_s": 160,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "aws-s3",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/aws-s3.log",
+      "duration_s": 167,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "bundle",
+      "status": "install-failed",
+      "fingerprint": " SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mageos_bundle.catalog_product_bundle_selection' doesn't exist setup:install [--backend-frontname BACKEND-FRONTNAME] [--remote-storage-driver REMOTE-STORAGE-DRIVER] [--remote-storag",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/bundle.log",
+      "duration_s": 74,
+      "composer_diff_baseline": "true",
+      "phase": "install"
+    },
+    {
+      "set": "dhl",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/dhl.log",
+      "duration_s": 165,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "downloadable",
+      "status": "install-failed",
+      "fingerprint": "Call Stack: 65.1326 160309144 1. Magento\\Framework\\DB\\Adapter\\Pdo\\Mysql->__destruct() /Users/jelle/dev/projects/mageos-maker/tests/modulargento/sandboxes/downloadable/vendor/mage-os/framework/DB/Adapter/Pdo/Mysql.php:0 65.1326 160309144 2. ",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/downloadable.log",
+      "duration_s": 102,
+      "composer_diff_baseline": "true",
+      "phase": "install"
+    },
+    {
+      "set": "fedex",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/fedex.log",
+      "duration_s": 165,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "gift-message",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\GiftMessage\\Helper\\Message\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/gift-message.log",
+      "duration_s": 147,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "google-marketing",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/google-marketing.log",
+      "duration_s": 144,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "grouped",
+      "status": "install-failed",
+      "fingerprint": " Constant \"\\Magento\\GroupedProduct\\Model\\Product\\Type\\Grouped::TYPE_CODE\" is not defined. setup:install [--backend-frontname BACKEND-FRONTNAME] [--enable-debug-logging ENABLE-DEBUG-LOGGING] [--enable-syslog-logging ENABLE-SYSLOG-LOGGING] [-",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/grouped.log",
+      "duration_s": 29,
+      "composer_diff_baseline": "true",
+      "phase": "install"
+    },
+    {
+      "set": "instant-purchase",
+      "status": "fail",
+      "fingerprint": "#12 /Users/jelle/dev/projects/mageos-maker/tests/modulargento/sandboxes/instant-purchase/vendor/mage-os/framework/Console/Cli.php(129): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(S",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/instant-purchase.log",
+      "duration_s": 100,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "inventory",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/inventory.log",
+      "duration_s": 119,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-de_de",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-de_de.log",
+      "duration_s": 129,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-en_us",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-en_us.log",
+      "duration_s": 130,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-es_es",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-es_es.log",
+      "duration_s": 130,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-fr_fr",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-fr_fr.log",
+      "duration_s": 128,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-nl_nl",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-nl_nl.log",
+      "duration_s": 133,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-pt_br",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-pt_br.log",
+      "duration_s": 146,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "language-zh_hans_cn",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/language-zh_hans_cn.log",
+      "duration_s": 133,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "login-as-customer",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/login-as-customer.log",
+      "duration_s": 128,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "luma",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/luma.log",
+      "duration_s": 131,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "marketplace",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/marketplace.log",
+      "duration_s": 133,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "media-gallery-sync",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\MediaGallerySynchronizationApi\\Api\\SynchronizeFilesInterface\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/media-gallery-sync.log",
+      "duration_s": 120,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "msrp",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\Msrp\\Helper\\Data\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/msrp.log",
+      "duration_s": 115,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "multishipping",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/multishipping.log",
+      "duration_s": 130,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "new-relic",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/new-relic.log",
+      "duration_s": 134,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "newsletter",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\Newsletter\\Model\\SubscriberFactory\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/newsletter.log",
+      "duration_s": 115,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "order-cancellation",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/order-cancellation.log",
+      "duration_s": 150,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "page-builder",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/page-builder.log",
+      "duration_s": 155,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "paypal",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/paypal.log",
+      "duration_s": 161,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "persistent-cart",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/persistent-cart.log",
+      "duration_s": 166,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "product-alert",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\ProductAlert\\Model\\StockFactory\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/product-alert.log",
+      "duration_s": 149,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "recaptcha",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/recaptcha.log",
+      "duration_s": 165,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "release-notification",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\ReleaseNotification\\Model\\Condition\\CanViewNotification\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/release-notification.log",
+      "duration_s": 156,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "reviews",
+      "status": "fail",
+      "fingerprint": "#12 /Users/jelle/dev/projects/mageos-maker/tests/modulargento/sandboxes/reviews/vendor/mage-os/framework/Console/Cli.php(129): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Co",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/reviews.log",
+      "duration_s": 118,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "rss",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/rss.log",
+      "duration_s": 150,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "sample-data",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/sample-data.log",
+      "duration_s": 171,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "send-friend",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/send-friend.log",
+      "duration_s": 173,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "swagger",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/swagger.log",
+      "duration_s": 175,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "swatches",
+      "status": "fail",
+      "fingerprint": "Class \"Magento\\Swatches\\Helper\\Media\" does not exist",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/swatches.log",
+      "duration_s": 155,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "two-factor-auth",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/two-factor-auth.log",
+      "duration_s": 173,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "ups",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/ups.log",
+      "duration_s": 186,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "usps",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/usps.log",
+      "duration_s": 175,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "weee",
+      "status": "pass",
+      "fingerprint": "",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/weee.log",
+      "duration_s": 179,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    },
+    {
+      "set": "wishlist",
+      "status": "fail",
+      "fingerprint": "#12 /Users/jelle/dev/projects/mageos-maker/tests/modulargento/sandboxes/wishlist/vendor/mage-os/framework/Console/Cli.php(129): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\C",
+      "log_path": "/Users/jelle/dev/projects/mageos-maker/tests/modulargento/results/raw/wishlist.log",
+      "duration_s": 138,
+      "composer_diff_baseline": "true",
+      "phase": "compile"
+    }
+  ]
+}
