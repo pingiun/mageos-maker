@@ -263,7 +263,13 @@ if [[ ${#app_code_overlays[@]} -gt 0 ]]; then
   fi
 fi
 
-# 5. Ensure the per-sandbox database exists (setup:install does not create it).
+# 5. Wipe filesystem state from any prior run — setup:install only cleans the DB.
+echo "--- wipe generated/ and var/cache (prior-run leftovers) ---" >> "$log"
+rm -rf "$sandbox/generated" "$sandbox/var/cache" "$sandbox/var/page_cache" \
+       "$sandbox/var/di" "$sandbox/var/composer_home" "$sandbox/var/log" \
+       "$sandbox/app/etc/config.php" "$sandbox/app/etc/env.php"
+
+# 6. Ensure the per-sandbox database exists (setup:install does not create it).
 echo "--- create database $db_name ---" >> "$log"
 if ! MYSQL_PWD="$DB_PASSWORD" mysql -h "$DB_HOST" -u "$DB_USER" \
     -e "CREATE DATABASE IF NOT EXISTS \`$db_name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" >> "$log" 2>&1; then
@@ -314,18 +320,26 @@ if [[ "$setup_status" -ne 0 ]]; then
     exit 0
   fi
   fp=""
+  # Restrict the search to the setup:install section so noise from earlier
+  # phases (e.g. composer dump-autoload's PSR-4 grumbles about test fixtures)
+  # doesn't outrank the real error.
+  install_section="$(awk '/^--- setup:install/,0' "$log")"
   while IFS= read -r pat; do
     [[ -z "$pat" ]] && continue
-    hit="$(grep -m1 -oE "$pat" "$log" || true)"
+    hit="$(printf '%s\n' "$install_section" | grep -m1 -oE "$pat" || true)"
     if [[ -n "$hit" ]]; then fp="$hit"; break; fi
   done <<'PATTERNS'
+SQLSTATE\[[^]]+\]:[^,]+
 Class "[^"]+" does not exist
 Source class "[^"]+" for "[^"]+" generation does not exist
 Plugin class '[^']+'[^']*doesn't exist
 Preference '[^']+' for '[^']+'
+Module '[^']+' has been already defined
+Constant "[^"]+" is not defined
+Fatal error: Uncaught [^:]+: [^ ]+
 PATTERNS
   if [[ -z "$fp" ]]; then
-    fp="$(tail -n 5 "$log" | tr '\n' ' ' | tr -s ' ' | head -c 240)"
+    fp="$(printf '%s\n' "$install_section" | tail -n 5 | tr '\n' ' ' | tr -s ' ' | head -c 240)"
     [[ -z "$fp" ]] && fp="setup-install-failed"
   fi
   emit_json "install-failed" "$fp" "$diff_flag" "install"
