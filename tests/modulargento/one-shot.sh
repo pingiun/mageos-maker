@@ -28,6 +28,13 @@
 #                            For a single VCS repo:
 #                              --repo vcs:https://github.com/foo/bar
 #   --require PKG[:CONSTRAINT]   extra `require` entry, repeatable (default constraint: *).
+#   --app-code SRC:MODULE[,MODULE2...]   copy patched module sources from
+#                            <SRC>/<module>/ into <sandbox>/app/code/Magento/<module>/
+#                            after composer install (Magento autoloads app/code
+#                            ahead of vendor, so overlaid modules shadow stock).
+#                            Repeatable. Use to test Modulargento patches that
+#                            live as full Mage-OS app/code overrides:
+#                              --app-code /Users/x/dev/tmp/modulargento-magento2/app/code/Magento:Reports,Catalog,Sales,WishlistReports
 
 set -u
 set -o pipefail
@@ -37,6 +44,7 @@ shift
 version=""
 extra_repos=()
 extra_requires=()
+app_code_overlays=()
 
 # Optional second positional: version (any non-flag arg).
 if [[ $# -gt 0 && "$1" != --* ]]; then
@@ -46,8 +54,9 @@ fi
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --repo)    extra_repos+=("$2"); shift 2 ;;
-    --require) extra_requires+=("$2"); shift 2 ;;
+    --repo)     extra_repos+=("$2"); shift 2 ;;
+    --require)  extra_requires+=("$2"); shift 2 ;;
+    --app-code) app_code_overlays+=("$2"); shift 2 ;;
     *) echo "unknown flag: $1" >&2; exit 2 ;;
   esac
 done
@@ -197,6 +206,41 @@ if ! ( cd "$sandbox" && timeout "$INSTALL_TIMEOUT" composer install --no-interac
   [[ -z "$fp" ]] && fp="composer-install-failed"
   emit_json "composer-failed" "$fp" "$diff_flag" "install"
   exit 0
+fi
+
+# 4b. Overlay patched module sources into app/code so they shadow vendor/.
+if [[ ${#app_code_overlays[@]} -gt 0 ]]; then
+  echo "--- app-code overlays: ${#app_code_overlays[@]} entry/entries ---" >> "$log"
+  mkdir -p "$sandbox/app/code/Magento"
+  overlay_failed=0
+  for spec in "${app_code_overlays[@]}"; do
+    if [[ "$spec" != *:* ]]; then
+      echo "--app-code expects SRC:MODULE[,MODULE...], got '$spec'" >> "$log"
+      overlay_failed=1; break
+    fi
+    src="${spec%%:*}"
+    modules_csv="${spec#*:}"
+    if [[ ! -d "$src" ]]; then
+      echo "  source dir not found: $src" >> "$log"
+      overlay_failed=1; break
+    fi
+    IFS=',' read -ra mods <<< "$modules_csv"
+    for mod in "${mods[@]}"; do
+      mod="${mod// /}"
+      [[ -z "$mod" ]] && continue
+      if [[ ! -d "$src/$mod" ]]; then
+        echo "  module not found: $src/$mod" >> "$log"
+        overlay_failed=1; break 2
+      fi
+      rm -rf "$sandbox/app/code/Magento/$mod"
+      cp -R "$src/$mod" "$sandbox/app/code/Magento/$mod"
+      echo "  overlaid Magento/$mod from $src" >> "$log"
+    done
+  done
+  if [[ $overlay_failed -ne 0 ]]; then
+    emit_json "configure-failed" "app-code-overlay-failed" "$diff_flag" "configure"
+    exit 0
+  fi
 fi
 
 # 5. Ensure the per-sandbox database exists (setup:install does not create it).
