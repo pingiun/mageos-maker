@@ -3,9 +3,20 @@ label: Google reCAPTCHA
 description: Google reCAPTCHA v2/v3 protection across storefront and admin forms
 packages:
   - mage-os/module-re-captcha-admin-ui
+  - mage-os/module-re-captcha-checkout
+  - mage-os/module-re-captcha-checkout-sales-rule
+  - mage-os/module-re-captcha-contact
+  - mage-os/module-re-captcha-customer
   - mage-os/module-re-captcha-frontend-ui
   - mage-os/module-re-captcha-migration
+  - mage-os/module-re-captcha-newsletter
+  - mage-os/module-re-captcha-paypal
+  - mage-os/module-re-captcha-resend-confirmation-email
+  - mage-os/module-re-captcha-review
+  - mage-os/module-re-captcha-send-friend
+  - mage-os/module-re-captcha-store-pickup
   - mage-os/module-re-captcha-ui
+  - mage-os/module-re-captcha-user
   - mage-os/module-re-captcha-validation
   - mage-os/module-re-captcha-validation-api
   - mage-os/module-re-captcha-version-2-checkbox
@@ -15,3 +26,4 @@ packages:
   - mage-os/module-re-captcha-webapi-graph-ql
   - mage-os/module-re-captcha-webapi-rest
   - mage-os/module-re-captcha-webapi-ui
+  - mage-os/module-re-captcha-wishlist

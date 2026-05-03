@@ -1,0 +1,6 @@
+name: admin-theme-m137
+label: Mage-OS Admin Theme (M137)
+description: New Mage-OS admin theme and the admin theme switcher module
+packages:
+  - mage-os/theme-adminhtml-m137
+  - mage-os/module-theme-adminhtml-switcher

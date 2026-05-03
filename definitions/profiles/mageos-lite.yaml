@@ -4,6 +4,7 @@ description: Aggressively trimmed Mage-OS — simple products only, no GraphQL, 
 selection:
   disabledSets:
     - admin-analytics
+    - admin-theme-m137
     - adobe-stock
     - automatic-translation
     - aws-s3
