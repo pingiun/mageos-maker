@@ -1,5 +1,6 @@
 name: instant-purchase
 label: Instant Purchase
 description: One-click purchase using stored payment and address
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-instant-purchase

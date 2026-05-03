@@ -1,6 +1,7 @@
 name: msrp
 label: MSRP (Minimum Advertised Price)
 description: MAP / "click for price" support across product types
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-msrp
   - mage-os/module-msrp-configurable-product

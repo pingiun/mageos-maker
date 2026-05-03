@@ -188,6 +188,7 @@
                 @foreach ($setDefs as $name => $set)
                     @php
                         $parentEnabled = in_array($name, $enabledSets, true);
+                        $removable = $setRemovable[$name] ?? true;
                         $haystack = strtolower(trim(
                             $name.' '.($set['label'] ?? '').' '.($set['description'] ?? '').' '
                             .collect($set['subtoggles'] ?? [])
@@ -196,10 +197,13 @@
                         ));
                     @endphp
                     <div class="module-row" data-search="{{ $haystack }}">
-                        <label>
-                            <input type="checkbox" wire:model.live="enabledSets" value="{{ $name }}">
+                        <label class="{{ $removable ? '' : 'forced' }}">
+                            <input type="checkbox" wire:model.live="enabledSets" value="{{ $name }}" @disabled(! $removable)>
                             <span>
                                 <strong>{{ $set['label'] }}</strong>
+                                @unless ($removable)
+                                    <span class="pill" title="Removing this set breaks stock Mage-OS at di:compile or setup:install. The Modulargento project provides patch modules to make it removable.">Modulargento</span>
+                                @endunless
                                 <span class="desc">{{ $set['description'] ?? '' }}</span>
                             </span>
                         </label>

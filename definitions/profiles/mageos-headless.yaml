@@ -6,9 +6,7 @@ selection:
     - luma
     - multishipping
     - rss
-    - instant-purchase
     - persistent-cart
-    - product-alert
   disabledSubtoggles:
     - page-builder.analytics
   disabledLayers: []

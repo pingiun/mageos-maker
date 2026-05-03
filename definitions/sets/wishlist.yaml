@@ -1,6 +1,7 @@
 name: wishlist
 label: Wishlist
 description: Customer wishlist functionality
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-wishlist
   - mage-os/module-wishlist-analytics

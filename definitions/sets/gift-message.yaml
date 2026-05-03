@@ -1,6 +1,7 @@
 name: gift-message
 label: Gift Messages
 description: Gift message support on cart and checkout
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-gift-message
   - mage-os/module-gift-message-graph-ql

@@ -1,5 +1,6 @@
 name: release-notification
 label: Release notifications
 description: Admin in-app release notification module
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-release-notification

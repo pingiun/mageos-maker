@@ -1,6 +1,7 @@
 name: reviews
 label: Product reviews
 description: Native customer product review module
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-review
   - mage-os/module-review-analytics

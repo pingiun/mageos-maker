@@ -1,6 +1,7 @@
 name: swatches
 label: Color/Image Swatches
 description: Product swatch attributes and layered nav
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-swatches
   - mage-os/module-swatches-graph-ql

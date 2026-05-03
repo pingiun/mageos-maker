@@ -1,6 +1,7 @@
 name: media-gallery-sync
 label: Media gallery synchronization
 description: Cron-driven media gallery and content reference synchronization
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-media-content-synchronization
   - mage-os/module-media-content-synchronization-api

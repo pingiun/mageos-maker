@@ -333,10 +333,16 @@ class Configurator extends Component
 
         $allSubtoggles = $defs->allSubtoggleKeys();
 
+        // Sets marked `removable: false` are force-enabled regardless of UI state —
+        // they're known to break di:compile / setup:install when removed without a
+        // Modulargento patch. They never enter disabledSets.
+        $nonRemovable = array_values(array_filter($allSetNames, fn ($n) => ! $defs->isSetRemovable($n)));
+        $disabled = array_values(array_diff($allSetNames, $this->enabledSets, $nonRemovable));
+
         return new Selection(
             version: $this->version ?? '',
             profile: $this->profile,
-            disabledSets: array_values(array_diff($allSetNames, $this->enabledSets)),
+            disabledSets: $disabled,
             disabledLayers: array_values(array_diff($stockLayerNames, $this->enabledStockLayers)),
             enabledLayers: [],
             enabledAddons: $this->enabledAddons,
@@ -424,7 +430,13 @@ class Configurator extends Component
 
         $this->version = $sel->version;
         $this->profile = $sel->profile;
-        $this->enabledSets = array_values(array_diff($allSets, $sel->disabledSets));
+        // Force non-removable sets on, even if a saved/profile selection tried to
+        // disable them. The view also greys their checkboxes out.
+        $effectiveDisabled = array_values(array_filter(
+            $sel->disabledSets,
+            fn ($n) => $defs->isSetRemovable($n),
+        ));
+        $this->enabledSets = array_values(array_diff($allSets, $effectiveDisabled));
         $this->enabledStockLayers = array_values(array_diff($stockLayers, $sel->disabledLayers));
         $this->profileGroups = $sel->profileGroups;
         $this->enabledSubtoggles = array_values(array_diff($defs->allSubtoggleKeys(), $sel->disabledSubtoggles));
@@ -452,9 +464,15 @@ class Configurator extends Component
         $modules = array_filter($defs->sets, fn ($s) => ($s['category'] ?? 'module') === 'module');
         $languages = array_filter($defs->sets, fn ($s) => ($s['category'] ?? 'module') === 'language');
 
+        $setRemovable = [];
+        foreach (array_keys($defs->sets) as $name) {
+            $setRemovable[$name] = $defs->isSetRemovable($name);
+        }
+
         return view('livewire.configurator', [
             'setDefs' => $modules,
             'languageDefs' => $languages,
+            'setRemovable' => $setRemovable,
             'layerDefs' => $defs->layers,
             'addonDefs' => $defs->addons,
             'profileDefs' => $defs->profiles,

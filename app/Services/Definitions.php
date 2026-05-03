@@ -180,6 +180,20 @@ class Definitions
      * Non-stock layers are additive (enable adds to `require`).
      * Defaults to true when the YAML omits the flag.
      */
+    /**
+     * Whether a set may be disabled by the user. Sets with `removable: false`
+     * are forced on — currently used for sets the Modulargento removal matrix
+     * proved cannot be cleanly cut out of stock Mage-OS without a patch module.
+     * Defaults to true when the YAML omits the flag.
+     */
+    public function isSetRemovable(string $name): bool
+    {
+        if (! array_key_exists($name, $this->sets)) {
+            return true;
+        }
+        return ($this->sets[$name]['removable'] ?? true) !== false;
+    }
+
     public function isLayerStock(string $name): bool
     {
         return ! array_key_exists($name, $this->layers)

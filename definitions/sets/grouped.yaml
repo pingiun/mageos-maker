@@ -1,6 +1,7 @@
 name: grouped
 label: Grouped products
 description: Grouped product type (collection of simples on one PDP)
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-grouped-product
   - mage-os/module-grouped-product-graph-ql

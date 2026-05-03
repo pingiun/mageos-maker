@@ -1,6 +1,7 @@
 name: downloadable
 label: Downloadable products
 description: Digital downloadable product type
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-downloadable
   - mage-os/module-downloadable-graph-ql

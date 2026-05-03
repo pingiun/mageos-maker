@@ -1,6 +1,7 @@
 name: bundle
 label: Bundle products
 description: Bundle ("build your own") product type
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-bundle
   - mage-os/module-bundle-graph-ql

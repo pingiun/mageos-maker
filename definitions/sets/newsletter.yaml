@@ -1,6 +1,7 @@
 name: newsletter
 label: Newsletter
 description: Native newsletter subscription module
+removable: false  # blocked at di:compile / setup:install — needs a Modulargento patch
 packages:
   - mage-os/module-newsletter
   - mage-os/module-newsletter-graph-ql
