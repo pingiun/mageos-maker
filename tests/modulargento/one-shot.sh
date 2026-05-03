@@ -19,12 +19,38 @@
 #   OPENSEARCH_HOST/OPENSEARCH_PORT      (defaults: 127.0.0.1 / 9200)
 #   REDIS_HOST/REDIS_PORT                 (defaults: 127.0.0.1 / 6379)
 #   AMQP_HOST/AMQP_PORT/AMQP_USER/AMQP_PASSWORD  (defaults: 127.0.0.1 / 5672 / guest / guest)
+#
+# Patch injection (e.g. testing a Modulargento fix):
+#   --repo TYPE:URL          extra composer repository, repeatable.
+#                            For a local Modulargento monorepo with multiple
+#                            sub-packages, use a path repo with a glob:
+#                              --repo path:/abs/path/to/modulargento-magento2/packages/*
+#                            For a single VCS repo:
+#                              --repo vcs:https://github.com/foo/bar
+#   --require PKG[:CONSTRAINT]   extra `require` entry, repeatable (default constraint: *).
 
 set -u
 set -o pipefail
 
 set_name="${1:?set name required}"
-version="${2:-}"
+shift
+version=""
+extra_repos=()
+extra_requires=()
+
+# Optional second positional: version (any non-flag arg).
+if [[ $# -gt 0 && "$1" != --* ]]; then
+  version="$1"
+  shift
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --repo)    extra_repos+=("$2"); shift 2 ;;
+    --require) extra_requires+=("$2"); shift 2 ;;
+    *) echo "unknown flag: $1" >&2; exit 2 ;;
+  esac
+done
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$script_dir/../.." && pwd)}"
@@ -114,6 +140,48 @@ if [[ "$set_name" != _* && -n "${BASELINE_COMPOSER:-}" && -f "$BASELINE_COMPOSER
     exit 0
   else
     diff_flag="true"
+  fi
+fi
+
+# 2b. Inject extra repositories / require entries (e.g. Modulargento patches).
+if [[ ${#extra_repos[@]} -gt 0 || ${#extra_requires[@]} -gt 0 ]]; then
+  echo "--- inject patches: ${#extra_repos[@]} repo(s), ${#extra_requires[@]} require(s) ---" >> "$log"
+  merge_status=0
+  python3 - "$sandbox/composer.json" "${#extra_repos[@]}" "${extra_repos[@]:-}" "${#extra_requires[@]}" "${extra_requires[@]:-}" >> "$log" 2>&1 <<'PY'
+import json, sys
+path = sys.argv[1]
+i = 2
+n_repos = int(sys.argv[i]); i += 1
+repos = sys.argv[i:i+n_repos]; i += n_repos
+n_reqs = int(sys.argv[i]); i += 1
+reqs = sys.argv[i:i+n_reqs]
+with open(path) as f:
+    cj = json.load(f)
+cj.setdefault("repositories", [])
+for spec in repos:
+    if not spec: continue
+    if ":" not in spec:
+        raise SystemExit(f"--repo expects TYPE:URL, got {spec!r}")
+    rtype, url = spec.split(":", 1)
+    cj["repositories"].append({"type": rtype, "url": url})
+    print(f"  repo: {rtype} {url}")
+cj.setdefault("require", {})
+for spec in reqs:
+    if not spec: continue
+    if ":" in spec:
+        pkg, constraint = spec.split(":", 1)
+    else:
+        pkg, constraint = spec, "*"
+    cj["require"][pkg] = constraint
+    print(f"  require: {pkg} {constraint}")
+with open(path, "w") as f:
+    json.dump(cj, f, indent=2)
+    f.write("\n")
+PY
+  merge_status=$?
+  if [[ $merge_status -ne 0 ]]; then
+    emit_json "configure-failed" "patch-merge-failed" "$diff_flag" "configure"
+    exit 0
   fi
 fi
 
