@@ -253,6 +253,14 @@ if [[ ${#app_code_overlays[@]} -gt 0 ]]; then
     emit_json "configure-failed" "app-code-overlay-failed" "$diff_flag" "configure"
     exit 0
   fi
+  # Removed vendor module dirs leave their registration.php still referenced
+  # in vendor/composer/autoload_files.php. Regenerate the composer autoloader
+  # so the bootstrap doesn't fail on the missing files.
+  echo "--- composer dump-autoload (after overlay) ---" >> "$log"
+  if ! ( cd "$sandbox" && composer dump-autoload --no-interaction --optimize ) >> "$log" 2>&1; then
+    emit_json "configure-failed" "dump-autoload-failed" "$diff_flag" "configure"
+    exit 0
+  fi
 fi
 
 # 5. Ensure the per-sandbox database exists (setup:install does not create it).
