@@ -81,7 +81,7 @@ fi
 
 # 2. noop detection — composer.json identical to baseline means the disable had no effect.
 diff_flag="unknown"
-if [[ -n "${BASELINE_COMPOSER:-}" && -f "$BASELINE_COMPOSER" ]]; then
+if [[ "$set_name" != _* && -n "${BASELINE_COMPOSER:-}" && -f "$BASELINE_COMPOSER" ]]; then
   if diff -q "$BASELINE_COMPOSER" "$sandbox/composer.json" >/dev/null 2>&1; then
     echo "composer.json identical to baseline — noop disable" >> "$log"
     emit_json "noop" "" "false" "configure"
