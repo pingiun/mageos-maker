@@ -51,4 +51,3 @@ packages:
   - mage-os/module-vault-graph-ql
   - mage-os/module-weee-graph-ql
   - mage-os/module-wishlist-graph-ql
-  - webonyx/graphql-php
