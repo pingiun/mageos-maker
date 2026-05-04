@@ -1,0 +1,8 @@
+name: mageos-rma
+label: Mage-OS RMA
+description: Return Merchandise Authorization module (Mage-OS Lab)
+packages:
+  - mage-os/module-rma
+repositories:
+  - type: composer
+    url: https://repo.packagist.org
